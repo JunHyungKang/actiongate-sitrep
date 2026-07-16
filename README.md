@@ -56,6 +56,7 @@ uv run pytest
 uv run ruff check .
 uv run uvicorn app:app --port 9000
 bash scripts/smoke-test.sh
+uv run python scripts/preflight_submission.py
 ```
 
 The default `.env.example` targets a local Ollama server. Any OpenAI-compatible

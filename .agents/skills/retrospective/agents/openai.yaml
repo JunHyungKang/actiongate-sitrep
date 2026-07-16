@@ -1,0 +1,4 @@
+interface:
+  display_name: "ActionGate Retrospective"
+  short_description: "Turn failures into harness improvements"
+  default_prompt: "Use $retrospective to convert the latest ActionGate failure into a durable harness improvement."

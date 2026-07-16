@@ -20,7 +20,8 @@ workspace boundary: do not scan or modify sibling repositories under
 - `tests/`: deterministic unit and endpoint tests.
 - `agent.json`: Marketplace metadata.
 - `prompt.txt`: evidence-first system prompt.
-- `docs/`: competition decisions, demo scenario, and submission draft.
+- `docs/`: competition decisions, demo scenario, submission draft, and live status.
+- `.agents/skills/`: orchestration, submission, and retrospective workflows.
 
 ## Development
 
@@ -32,7 +33,26 @@ uv run pytest
 uv run ruff check .
 uv run uvicorn app:app --port 9000
 bash scripts/smoke-test.sh
+uv run python scripts/preflight_submission.py
 ```
+
+## Competition Harness
+
+Use the repo-local `orchestration` skill for any non-trivial product, judging,
+or deployment decision. Start from the live deadline and submission state, then
+rank work by expected rubric gain per hour. Keep at least one bounded exploration
+lane active until the entry has a tested differentiator; do not let repeated
+polish consume every loop.
+
+Use subagents for distinct independent roles when available: rubric critic,
+adversarial reliability reviewer, UX reviewer, or deployment/submission auditor.
+The main agent owns integration and final validation. Every serious loop must
+leave one concrete artifact such as a test, product change, evaluation result,
+deployment proof, demo asset, or updated submission record.
+
+Use `submission` before external publishing and `retrospective` after failed
+tests, deployment friction, judge feedback, or repeated manual work. A repeated
+step belongs in a script or skill; a durable decision belongs in `docs/`.
 
 ## Quality Rules
 

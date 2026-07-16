@@ -1,0 +1,4 @@
+interface:
+  display_name: "ActionGate Submission"
+  short_description: "Verify deployment and submission readiness"
+  default_prompt: "Use $submission to verify ActionGate before Marketplace and Kaggle publication."

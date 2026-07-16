@@ -1,5 +1,7 @@
 # ActionGate for SitRep
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/JunHyungKang/actiongate-sitrep)
+
 ActionGate is a Code Track entry for the
 [SitRep AI Agent Hackathon](https://www.kaggle.com/competitions/sit-rep-ai-hackathon).
 It acts as an ambiguity firewall between meeting output and execution.
@@ -65,6 +67,10 @@ provider can be configured with `LLM_BASE_URL`, `LLM_API_KEY`, and `MODEL`.
 2. Deploy this service or expose port 9000 with `scripts/tunnel.sh`.
 3. Save the endpoint, copy the one-time signing secret into `.env`, and restart.
 4. Test in Studio, then publish the agent to the Marketplace.
+
+For the hosted deployment, set `SITREP_AGENT_SECRET`, `LLM_API_KEY`, and the
+OpenRouter-compatible values already declared in `render.yaml`. Confirm
+`/health` returns `{"ok":true}` before using the Studio Test button.
 
 See [the demo scenario](docs/demo.md) and
 [the Kaggle writeup draft](docs/submission-draft.md).

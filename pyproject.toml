@@ -1,0 +1,26 @@
+[project]
+name = "actiongate-sitrep-agent"
+version = "0.1.0"
+description = "Evidence-backed execution contracts for SitRep meeting actions."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.109.0",
+    "httpx>=0.26.0",
+    "uvicorn[standard]>=0.27.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

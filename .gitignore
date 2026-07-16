@@ -1,0 +1,28 @@
+.venv/
+.uv-cache/
+.uv-tools/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.matplotlib-cache/
+.mplconfig/
+__pycache__/
+*.py[cod]
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Archived NeuroGolf data and generated artifacts remain local only.
+artifacts/
+data/
+outputs/
+submissions/
+tmp/
+src/
+ws/
+*.zip
+bestn*.json
+test_*.json
+Kaggle ref*
+Kaggle submission*

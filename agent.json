@@ -1,7 +1,7 @@
 {
   "name": "ActionGate",
-  "tagline": "Turn vague meeting actions into evidence-backed execution contracts.",
-  "description": "ActionGate checks whether a meeting action has a confirmed owner, deadline, deliverable, definition of done, and dependencies. It produces a readiness score, evidence-backed execution contract, proposed next steps, risks, and the exact questions needed to close open commitments without inventing facts.",
+  "tagline": "Stop ambiguous meeting actions before they become rework.",
+  "description": "ActionGate turns a meeting action into an approval-ready execution packet. It verifies the owner, deadline, deliverable, definition of done, and dependencies against exact source evidence; blocks unsafe assumptions; and produces a copy-ready clarification request that closes the missing commitments.",
   "icon": "check_circle",
   "color": "green",
   "category": "productivity",

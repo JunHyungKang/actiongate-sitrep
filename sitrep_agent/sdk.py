@@ -26,6 +26,7 @@ SIGNATURE_MAX_AGE_SECONDS = int(os.getenv("SITREP_SIGNATURE_MAX_AGE", "300"))
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://localhost:11434/v1")
 LLM_API_KEY = os.getenv("LLM_API_KEY")  # Ollama ignores; required for hosted providers.
 MODEL = os.getenv("MODEL", "llama3.2:1b")
+LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "45"))
 
 
 def verify_signature(timestamp: str | None, signature: str | None, body: bytes) -> bool:
@@ -63,7 +64,7 @@ class LLM:
         headers = {"Content-Type": "application/json"}
         if LLM_API_KEY:
             headers["Authorization"] = f"Bearer {LLM_API_KEY}"
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=LLM_TIMEOUT_SECONDS) as client:
             resp = await client.post(
                 url,
                 headers=headers,

@@ -5,9 +5,9 @@ ActionGate is a Code Track entry for the
 It acts as an ambiguity firewall between meeting output and execution.
 
 Given one meeting action, its summary, and attendees, ActionGate produces an
-evidence-backed execution contract. It confirms only facts supported by exact
-source quotes, scores readiness, rejects unsafe assumptions, and asks the
-questions required to unblock the work.
+approval-ready execution packet. It confirms only facts supported by exact
+source quotes, scores readiness, rejects unsafe assumptions, and creates a
+copy-ready clarification request that unblocks the work.
 
 ## Why It Exists
 
@@ -17,6 +17,24 @@ relative phrases such as "next week" into a real deadline. An action is GREEN
 only when its objective, owner, deadline, deliverable, definition of done, and
 dependencies are all confirmed.
 
+![ActionGate approval packet](docs/actiongate-preview.png)
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[Signed SitRep task] --> B[Typed LLM extraction]
+    B --> C[Deterministic evidence policy]
+    C --> D{All commitments verified?}
+    D -->|No| E[HOLD plus clarification packet]
+    D -->|Yes| F[PROCEED plus handoff packet]
+    E --> G[HTML approval packet and Markdown audit]
+    F --> G
+```
+
+The model proposes structure; it cannot override the evidence, ownership,
+deadline, or readiness gates.
+
 ## Output
 
 - RED, YELLOW, or GREEN execution-readiness gate
@@ -24,7 +42,8 @@ dependencies are all confirmed.
 - open commitments and clarification questions
 - proposed next steps with visibly unconfirmed owners and timing
 - stated versus inferred risks
-- Markdown contract and a compact HTML readiness report
+- copy-ready clarification request or ready-to-handoff confirmation
+- decision-first HTML approval packet and a copyable Markdown audit trail
 
 ## Local Development
 

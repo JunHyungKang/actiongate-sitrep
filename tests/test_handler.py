@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from handler import _audit_plan, _extract_json, _render, handler
+from handler import _audit_plan, _extract_json, _render, _render_html, handler
 from sitrep_agent.sdk import AgentInput, Ctx
 
 
@@ -77,6 +77,50 @@ def test_green_requires_every_contract_field():
     assert "GREEN - READY" not in _render("Pilot", audited)
 
 
+def test_html_contains_the_same_actionable_sections_as_markdown():
+    plan = {
+        "objective": fact("Ship pilot", "Ship pilot"),
+        "risks": [{"value": "Legal review may delay launch", "kind": "inferred", "evidence": ""}],
+        "next_steps": [{"action": "Confirm owner", "owner": "TBD", "timing": "TBD"}],
+        "questions": [],
+    }
+    audited = _audit_plan(plan, "Task title: Ship pilot\nMeeting attendees: Maya")
+    html = _render_html("Pilot <script>alert(1)</script>", audited)
+
+    assert "What happens next" in html
+    assert "Who is the directly responsible owner?" in html
+    assert "Proposed next steps" in html
+    assert "Legal review may delay launch" in html
+    assert "&lt;script&gt;" in html
+    assert "<script>alert" not in html
+
+
+def test_resolved_contract_produces_proceed_packet():
+    plan = {
+        "objective": fact("Send the rollout plan", "Send the rollout plan"),
+        "owner": fact("Maya", "Maya owns the follow-up"),
+        "deadline": fact("2026-07-20 17:00 KST", "Due 2026-07-20 17:00 KST"),
+        "deliverables": [fact("rollout plan", "Send the rollout plan")],
+        "acceptance_criteria": [fact("approved by Acme", "Done when approved by Acme")],
+        "dependencies": [fact("legal approval", "Depends on legal approval")],
+        "questions": [],
+    }
+    source = "\n".join(
+        [
+            "Task title: Send the rollout plan",
+            "Task description: Maya owns the follow-up. Due 2026-07-20 17:00 KST.",
+            "Meeting summary: Done when approved by Acme. Depends on legal approval.",
+            "Meeting attendees: Maya",
+        ]
+    )
+    audited = _audit_plan(plan, source)
+    markdown = _render("Acme rollout", audited)
+
+    assert "GREEN - READY" in markdown
+    assert "Decision: PROCEED" in markdown
+    assert "fully specified and ready to hand off" in markdown
+
+
 class FakeLLM:
     model = "fake"
 
@@ -85,6 +129,13 @@ class FakeLLM:
 
     async def complete(self, **_kwargs) -> str:
         return self.responses.pop(0)
+
+
+class FailingLLM:
+    model = "failing"
+
+    async def complete(self, **_kwargs) -> str:
+        raise RuntimeError("provider unavailable")
 
 
 @pytest.mark.asyncio
@@ -106,16 +157,36 @@ async def test_handler_returns_audited_contract_and_questions():
         attendees=[{"name": "Maya Chen"}, {"name": "Jordan Lee"}],
         agent={},
     )
-    ctx = Ctx(instructions="", tools=[], llm=FakeLLM([draft, draft]))
+    ctx = Ctx(instructions="", tools=[], llm=FakeLLM([draft]))
 
     result = await handler(agent_input, ctx)
 
-    content = result["artifacts"][0]["content"]
+    content = result["artifacts"][1]["content"]
     assert "RED - BLOCKED" in content or "YELLOW - NEEDS CLARIFICATION" in content
     assert "Who is the directly responsible owner?" in content
-    assert "What is the deadline or next review date?" in content
+    assert "What is the calendar deadline or review date, including timezone?" in content
     assert "| Owner | Not confirmed | - |" in content
     assert "| 1 | Confirm the owner and exact deadline | TBD | TBD |" in content
-    assert [item["type"] for item in result["artifacts"]] == ["markdown", "html"]
-    assert "<script" not in result["artifacts"][1]["content"]
-    assert len(ctx.logs) == 3
+    assert "Copy-ready clarification request" in content
+    assert [item["type"] for item in result["artifacts"]] == ["html", "markdown"]
+    assert "<script" not in result["artifacts"][0]["content"]
+    assert len(ctx.logs) == 2
+
+
+@pytest.mark.asyncio
+async def test_provider_failure_returns_a_safe_hold_packet():
+    agent_input = AgentInput(
+        task={"title": "Prepare the launch plan"},
+        summary="",
+        attendees=[{"name": "Maya Chen"}],
+        agent={},
+    )
+    ctx = Ctx(instructions="", tools=[], llm=FailingLLM())
+
+    result = await handler(agent_input, ctx)
+
+    markdown = result["artifacts"][1]["content"]
+    assert "HOLD" in markdown
+    assert "Who is the directly responsible owner?" in markdown
+    assert "Maya Chen" not in markdown
+    assert "structured extraction failed" in ctx.logs[1]

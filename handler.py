@@ -25,6 +25,24 @@ SCHEMA = """
 }
 """.strip()
 
+FIELD_SPECS = (
+    ("objective", "Objective", 20),
+    ("owner", "Directly responsible owner", 20),
+    ("deadline", "Deadline or review date", 15),
+    ("deliverables", "Concrete deliverables", 15),
+    ("acceptance_criteria", "Measurable definition of done", 20),
+    ("dependencies", "Dependencies or explicit none", 10),
+)
+
+AUTO_QUESTIONS = {
+    "objective": "What exact outcome should this action produce?",
+    "owner": "Who is the directly responsible owner?",
+    "deadline": "What is the calendar deadline or review date, including timezone?",
+    "deliverables": "What exact artifact or outcome must be delivered?",
+    "acceptance_criteria": "How will the team decide this action is done?",
+    "dependencies": "What dependencies or approvals can block this action, or are there none?",
+}
+
 
 def _normalize(value: str) -> str:
     return " ".join(value.casefold().split())
@@ -170,31 +188,40 @@ def _audit_plan(plan: dict[str, Any], source: str) -> dict[str, Any]:
 
 
 def _missing_fields(plan: dict[str, Any]) -> list[str]:
-    missing: list[str] = []
-    checks = (
-        ("objective", "A specific objective"),
-        ("owner", "A directly responsible owner"),
-        ("deadline", "A deadline or review date"),
-        ("deliverables", "Concrete deliverables"),
-        ("acceptance_criteria", "A measurable definition of done"),
-        ("dependencies", "Confirmed dependencies or an explicit 'none'"),
-    )
-    for key, label in checks:
-        if not plan.get(key):
-            missing.append(label)
-    return missing
+    return [label for key, label, _weight in FIELD_SPECS if not plan.get(key)]
 
 
 def _readiness_score(plan: dict[str, Any]) -> int:
-    weights = {
-        "objective": 20,
-        "owner": 20,
-        "deadline": 15,
-        "deliverables": 15,
-        "acceptance_criteria": 20,
-        "dependencies": 10,
-    }
-    return sum(weight for key, weight in weights.items() if plan.get(key))
+    return sum(weight for key, _label, weight in FIELD_SPECS if plan.get(key))
+
+
+def _gate(plan: dict[str, Any]) -> tuple[str, str, str]:
+    score = _readiness_score(plan)
+    if not _missing_fields(plan):
+        return "GREEN - READY", "PROCEED", "#137333"
+    if score >= 50:
+        return "YELLOW - NEEDS CLARIFICATION", "HOLD", "#8a5a00"
+    return "RED - BLOCKED", "HOLD", "#b3261e"
+
+
+def _questions(plan: dict[str, Any]) -> list[str]:
+    questions = list(plan.get("questions") or [])
+    for key, question in AUTO_QUESTIONS.items():
+        if not plan.get(key) and question not in questions:
+            questions.append(question)
+    return questions[:8]
+
+
+def _clarification_request(title: str, plan: dict[str, Any]) -> str:
+    questions = _questions(plan)
+    if not questions:
+        return f"{title} is fully specified and ready to hand off."
+    lines = [
+        f"Before work starts on '{title}', please confirm:",
+        *(f"{index}. {question}" for index, question in enumerate(questions, 1)),
+        "Once confirmed, the action can move to execution without hidden assumptions.",
+    ]
+    return "\n".join(lines)
 
 
 def _cell(value: str) -> str:
@@ -204,17 +231,14 @@ def _cell(value: str) -> str:
 def _render(title: str, plan: dict[str, Any]) -> str:
     score = _readiness_score(plan)
     missing = _missing_fields(plan)
-    if not missing:
-        status = "GREEN - READY"
-    elif score >= 50:
-        status = "YELLOW - NEEDS CLARIFICATION"
-    else:
-        status = "RED - BLOCKED"
+    status, decision, _color = _gate(plan)
+    confirmed_count = len(FIELD_SPECS) - len(missing)
 
     lines = [
         f"# ActionGate: {title}",
         "",
         f"**Execution readiness: {score}/100 - {status}**",
+        f"**Decision: {decision} | Verified commitments: {confirmed_count}/{len(FIELD_SPECS)}**",
         "",
         "> Only claims backed by an exact quote from the task or meeting summary are treated as confirmed.",
         "",
@@ -264,21 +288,14 @@ def _render(title: str, plan: dict[str, Any]) -> str:
     else:
         lines.append("- No risks were identified from the supplied context.")
 
-    auto_questions = {
-        "owner": "Who is the directly responsible owner?",
-        "deadline": "What is the deadline or next review date?",
-        "deliverables": "What exact artifact or outcome must be delivered?",
-        "acceptance_criteria": "How will the team decide this action is done?",
-        "dependencies": "What dependencies or approvals can block this action?",
-    }
-    questions = list(plan.get("questions") or [])
-    for key, question in auto_questions.items():
-        if not plan.get(key) and question not in questions:
-            questions.append(question)
+    questions = _questions(plan)
     lines.extend(["", "## Questions to close"])
-    lines.extend(f"- {question}" for question in questions[:8])
+    lines.extend(f"- {question}" for question in questions)
     if not questions:
         lines.append("- No clarification question is required.")
+
+    lines.extend(["", "## Copy-ready clarification request", ""])
+    lines.extend(f"> {_cell(line)}" for line in _clarification_request(title, plan).splitlines())
 
     lines.extend(["", "---", "Generated by ActionGate. Proposed steps and inferred risks require human approval."])
     return "\n".join(lines)
@@ -287,18 +304,20 @@ def _render(title: str, plan: dict[str, Any]) -> str:
 def _render_html(title: str, plan: dict[str, Any]) -> str:
     score = _readiness_score(plan)
     missing = _missing_fields(plan)
-    if not missing:
-        status, color = "GREEN - READY", "#137333"
-    elif score >= 50:
-        status, color = "YELLOW - NEEDS CLARIFICATION", "#8a5a00"
-    else:
-        status, color = "RED - BLOCKED", "#b3261e"
+    status, decision, color = _gate(plan)
+    confirmed_count = len(FIELD_SPECS) - len(missing)
 
     def fact_row(label: str, key: str) -> str:
         fact = plan.get(key)
         value = escape(fact["value"], quote=True) if fact else "Not confirmed"
         evidence = escape(fact["evidence"], quote=True) if fact else "-"
-        return f"<tr><th>{label}</th><td>{value}</td><td>{evidence}</td></tr>"
+        return (
+            "<tr>"
+            f'<th style="text-align:left;padding:10px;border-bottom:1px solid #e7e9ee">{label}</th>'
+            f'<td style="padding:10px;border-bottom:1px solid #e7e9ee">{value}</td>'
+            f'<td style="padding:10px;border-bottom:1px solid #e7e9ee">{evidence}</td>'
+            "</tr>"
+        )
 
     rows = "".join(fact_row(label, key) for key, label in (
         ("objective", "Objective"),
@@ -313,26 +332,84 @@ def _render_html(title: str, plan: dict[str, Any]) -> str:
         facts = plan.get(key) or []
         values = "<br>".join(escape(item["value"], quote=True) for item in facts) or "Not confirmed"
         evidence = "<br>".join(escape(item["evidence"], quote=True) for item in facts) or "-"
-        rows += f"<tr><th>{label}</th><td>{values}</td><td>{evidence}</td></tr>"
+        rows += (
+            "<tr>"
+            f'<th style="text-align:left;padding:10px;border-bottom:1px solid #e7e9ee">{label}</th>'
+            f'<td style="padding:10px;border-bottom:1px solid #e7e9ee">{values}</td>'
+            f'<td style="padding:10px;border-bottom:1px solid #e7e9ee">{evidence}</td>'
+            "</tr>"
+        )
 
     open_items = "".join(f"<li>{escape(item, quote=True)}</li>" for item in missing)
     if not open_items:
         open_items = "<li>No required commitment is missing.</li>"
-    questions = "".join(
-        f"<li>{escape(item, quote=True)}</li>" for item in (plan.get("questions") or [])[:8]
-    ) or "<li>No additional model-generated question.</li>"
+    questions = "".join(f"<li>{escape(item, quote=True)}</li>" for item in _questions(plan))
+    if not questions:
+        questions = "<li>No clarification question is required.</li>"
+
+    steps = plan.get("next_steps") or []
+    step_rows = "".join(
+        "<tr>"
+        f"<td>{index}</td>"
+        f"<td>{escape(step['action'], quote=True)}</td>"
+        f"<td>{escape(step['owner'], quote=True)}</td>"
+        f"<td>{escape(step['timing'], quote=True)}</td>"
+        "</tr>"
+        for index, step in enumerate(steps, 1)
+    )
+    if not step_rows:
+        step_rows = (
+            "<tr><td>1</td><td>Resolve the open commitments before execution</td>"
+            "<td>TBD</td><td>After clarification</td></tr>"
+        )
+
+    risks = plan.get("risks") or []
+    risk_items = "".join(
+        f"<li><strong>{'Confirmed' if risk['kind'] == 'stated' else 'Inferred - verify'}:</strong> "
+        f"{escape(risk['value'], quote=True)}</li>"
+        for risk in risks
+    ) or "<li>No risks were identified from the supplied context.</li>"
+
+    clarification = escape(_clarification_request(title, plan), quote=True)
     return f"""<!doctype html>
-<html><head><meta charset="utf-8"><title>ActionGate</title></head>
-<body style="font-family:Arial,sans-serif;max-width:900px;margin:24px auto;color:#202124">
-<header style="border-left:8px solid {color};padding:12px 18px;background:#f8f9fa">
-<h1 style="margin:0 0 8px">ActionGate: {escape(title, quote=True)}</h1>
-<strong style="color:{color}">{score}/100 - {status}</strong></header>
-<p>Only source-backed claims appear as confirmed facts.</p>
-<table style="width:100%;border-collapse:collapse" border="1" cellpadding="8">
-<thead><tr><th>Field</th><th>Confirmed value</th><th>Evidence</th></tr></thead><tbody>{rows}</tbody></table>
-<h2>Open commitments</h2><ul>{open_items}</ul>
-<h2>Questions to close</h2><ul>{questions}</ul>
-<p><small>Proposed work requires human approval.</small></p>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ActionGate execution packet</title></head>
+<body style="margin:0;background:#f3f4f6;color:#16181d;font-family:Inter,Arial,sans-serif;line-height:1.5;overflow-wrap:anywhere">
+<main style="width:100%;max-width:960px;margin:0 auto;background:#ffffff;box-sizing:border-box">
+<header style="padding:28px clamp(16px,5vw,32px) 24px;border-top:8px solid {color};border-bottom:1px solid #d9dde5">
+<div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#525866">Execution control</div>
+<h1 style="font-size:26px;line-height:1.25;margin:6px 0 18px">{escape(title, quote=True)}</h1>
+<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end">
+<div><div style="font-size:12px;color:#525866">Decision</div><strong style="font-size:22px;color:{color}">{decision}</strong></div>
+<div><div style="font-size:12px;color:#525866">Readiness</div><strong style="font-size:22px">{score}/100</strong></div>
+<div><div style="font-size:12px;color:#525866">Verified</div><strong style="font-size:22px">{confirmed_count}/{len(FIELD_SPECS)}</strong></div>
+</div>
+<div style="height:8px;background:#e7e9ee;margin-top:20px"><div style="width:{score}%;height:8px;background:{color}"></div></div>
+<div style="margin-top:10px;font-weight:700;color:{color}">{status}</div>
+</header>
+<section style="padding:24px clamp(16px,5vw,32px);border-bottom:1px solid #d9dde5">
+<h2 style="font-size:18px;margin:0 0 10px">What happens next</h2>
+<div style="white-space:pre-line;background:#f7f8fa;border-left:4px solid {color};padding:16px">{clarification}</div>
+</section>
+<section style="padding:24px clamp(16px,5vw,32px);border-bottom:1px solid #d9dde5;overflow-x:auto">
+<h2 style="font-size:18px;margin:0 0 12px">Verified execution contract</h2>
+<table style="width:100%;border-collapse:collapse;font-size:14px">
+<thead><tr style="background:#f3f4f6"><th style="text-align:left;padding:10px">Field</th><th style="text-align:left;padding:10px">Confirmed value</th><th style="text-align:left;padding:10px">Source evidence</th></tr></thead>
+<tbody>{rows}</tbody></table>
+</section>
+<section style="padding:24px clamp(16px,5vw,32px);border-bottom:1px solid #d9dde5">
+<h2 style="font-size:18px;margin:0 0 8px">Open commitments</h2><ul style="margin:0;padding-left:20px">{open_items}</ul>
+<h2 style="font-size:18px;margin:22px 0 8px">Questions to close</h2><ol style="margin:0;padding-left:20px">{questions}</ol>
+</section>
+<section style="padding:24px clamp(16px,5vw,32px);border-bottom:1px solid #d9dde5;overflow-x:auto">
+<h2 style="font-size:18px;margin:0 0 12px">Proposed next steps</h2>
+<table style="width:100%;border-collapse:collapse;font-size:14px">
+<thead><tr style="background:#f3f4f6"><th style="padding:10px;text-align:left">#</th><th style="padding:10px;text-align:left">Action</th><th style="padding:10px;text-align:left">Owner</th><th style="padding:10px;text-align:left">Timing</th></tr></thead>
+<tbody>{step_rows}</tbody></table>
+<h2 style="font-size:18px;margin:22px 0 8px">Risks and assumptions</h2><ul style="margin:0;padding-left:20px">{risk_items}</ul>
+</section>
+<footer style="padding:18px clamp(16px,5vw,32px);color:#525866;font-size:12px">ActionGate confirms only source-backed facts. Proposed steps and inferred risks require human approval.</footer>
+</main>
 </body></html>"""
 
 
@@ -360,27 +437,13 @@ async def handler(input: AgentInput, ctx: Ctx) -> dict[str, Any]:
         ctx.log(f"structured extraction failed: {type(exc).__name__}")
         draft = {"objective": {"value": title, "evidence": title}, "questions": []}
 
-    try:
-        ctx.log("running independent hallucination and completeness review")
-        review_prompt = (
-            f"Review the candidate against the source. Remove or correct every factual claim whose evidence "
-            f"is not an exact quote. Improve proposed next steps and clarification questions. Return JSON only "
-            f"with the same schema.\n\nSCHEMA:\n{SCHEMA}\n\nSOURCE:\n{source}\n\nCANDIDATE:\n"
-            f"{json.dumps(draft, ensure_ascii=False)}"
-        )
-        reviewed_raw = await ctx.llm.complete(system=SYSTEM_PROMPT, prompt=review_prompt, temperature=0.0)
-        reviewed = _extract_json(reviewed_raw)
-    except Exception as exc:
-        ctx.log(f"review pass failed; using audited draft: {type(exc).__name__}")
-        reviewed = draft
-
-    audited = _audit_plan(reviewed, source)
+    audited = _audit_plan(draft, source)
     report = _render(title, audited)
     html_report = _render_html(title, audited)
     ctx.log(f"readiness={_readiness_score(audited)} missing={len(_missing_fields(audited))}")
     return {
         "artifacts": [
-            {"type": "markdown", "title": f"ActionGate - {title}", "content": report},
-            {"type": "html", "title": f"ActionGate visual report - {title}", "content": html_report},
+            {"type": "html", "title": f"ActionGate approval packet - {title}", "content": html_report},
+            {"type": "markdown", "title": f"ActionGate audit trail - {title}", "content": report},
         ]
     }

@@ -52,9 +52,9 @@ See [the demo scenario](docs/demo.md) and
 
 ## Repository History
 
-The previous NeuroGolf 2026 workspace is preserved on the
-`archive/neurogolf-2026` branch and `neurogolf-2026-final` tag. Large local
-NeuroGolf data and generated artifacts remain ignored on the development machine.
+This is a standalone repository with a clean ActionGate history. The previous
+NeuroGolf 2026 workspace is preserved separately and is not included in this
+project or its public Git history.
 
 ## License
 

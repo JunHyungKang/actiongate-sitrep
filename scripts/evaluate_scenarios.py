@@ -162,21 +162,25 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
         ),
     },
     {
-        "id": "provider-independent-explicit-contract",
-        "expected": "PROCEED",
+        "id": "provider-failure-safe-hold",
+        "expected": "HOLD",
         "input": {
             "task": {
-                "title": "Ship Acme rollout plan",
-                "description": (
-                    "Maya will deliver the Acme rollout plan by "
-                    "2026-07-20 17:00 KST."
-                ),
+                "title": "Prepare the launch plan",
+                "description": "",
             },
-            "summary": COMPLETE_SUMMARY,
+            "summary": "",
             "attendees": [{"name": "Maya"}],
         },
-        "llm": "unexpected",
-        "questions": (),
+        "llm": "failing",
+        "questions": (
+            "Who is the directly responsible owner?",
+            "What is the calendar deadline or review date, including timezone?",
+            "What exact artifact or outcome must be delivered?",
+            "How will the team decide this action is done?",
+            "What dependencies or approvals can block this action, or are there none?",
+        ),
+        "forbidden": ("Maya",),
     },
 )
 
@@ -196,6 +200,13 @@ class UnexpectedLLM:
 
     async def complete(self, **_kwargs: Any) -> str:
         raise AssertionError("explicit contracts must skip the provider")
+
+
+class FailingLLM:
+    model = "failing"
+
+    async def complete(self, **_kwargs: Any) -> str:
+        raise RuntimeError("provider unavailable")
 
 
 @dataclass(frozen=True)
@@ -227,11 +238,13 @@ async def evaluate() -> list[ScenarioResult]:
     for scenario in SCENARIOS:
         payload = scenario["input"]
         agent_input = AgentInput(agent={}, **payload)
-        llm = (
-            UnexpectedLLM()
-            if scenario.get("llm") == "unexpected"
-            else StaticLLM(scenario.get("draft", {}))
-        )
+        llm_mode = scenario.get("llm")
+        if llm_mode == "unexpected":
+            llm = UnexpectedLLM()
+        elif llm_mode == "failing":
+            llm = FailingLLM()
+        else:
+            llm = StaticLLM(scenario.get("draft", {}))
         output = await handler(agent_input, Ctx(instructions="", tools=[], llm=llm))
         markdown = output["artifacts"][0]["content"]
         html = output["artifacts"][1]["content"]

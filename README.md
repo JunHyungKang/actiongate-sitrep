@@ -8,8 +8,8 @@ It acts as an ambiguity firewall between meeting output and execution.
 
 Given one meeting action, its summary, and attendees, ActionGate produces an
 approval-ready execution packet. It confirms only facts supported by exact
-source quotes, scores readiness, rejects unsafe assumptions, and creates a
-copy-ready clarification request that unblocks the work.
+source quotes, scores contract completeness, rejects unsafe assumptions, and
+creates a copy-ready clarification request that unblocks the work.
 
 ![ActionGate HOLD to PROCEED flow](docs/actiongate-comparison.png)
 
@@ -39,7 +39,7 @@ flowchart LR
 ```
 
 The model proposes structure; it cannot override the evidence, ownership,
-deadline, or readiness gates. Explicitly labeled contracts remain actionable
+deadline, or contract-completeness gates. Explicitly labeled contracts remain actionable
 when the model provider is unavailable.
 
 ## Output

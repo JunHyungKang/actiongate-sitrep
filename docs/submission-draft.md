@@ -31,9 +31,10 @@ of six required commitments, not a calibrated probability of success.
 The Code Track agent combines a constrained LLM pass with a deterministic
 extractor for explicitly labeled commitments. A Python policy engine then
 rejects every confirmed fact whose value and evidence do not appear in the task
-or meeting summary. The model cannot override the owner, deadline, or readiness
-gates, and provider failure cannot block a fully explicit labeled contract. The final
-artifacts are rendered from the audited structure, not directly from free text:
+or meeting summary. The model cannot override the owner, deadline, or
+contract-completeness gates, and provider failure cannot block a fully explicit
+labeled contract. The final artifacts are rendered from the audited structure,
+not directly from free text:
 a detailed Markdown contract and a decision-first HTML approval packet.
 
 ## Challenges
@@ -49,7 +50,7 @@ the confirmed contract and GREEN status for source-supported commitments.
 - an eight-case synthetic policy suite that reduced false-PROCEED decisions
   from five to zero versus a presence-only baseline;
 - a six-case artifact-level scenario suite with 6/6 decisions correct, zero
-  unsupported confirmations, and 9/9 missing-field questions recovered;
+  unsupported confirmations, and 14/14 missing-field questions recovered;
 - explicit handling of vague deadlines;
 - provider-independent recovery of explicit complete contracts;
 - 46 regression tests covering evidence validation, ownership, deadlines,

@@ -10,7 +10,7 @@ checks the judge-visible Markdown and HTML artifacts. It does not call a hosted 
 | False HOLD | 0 |
 | Unsupported confirmed facts | 0 |
 | Forbidden owner confirmations | 0 |
-| Missing-field question recall | 9/9 |
+| Missing-field question recall | 14/14 |
 | Safe, complete artifact pairs | 6/6 |
 
 | Scenario | Expected | Actual | Unsupported | Questions | Artifacts |
@@ -20,7 +20,7 @@ checks the judge-visible Markdown and HTML artifacts. It does not call a hosted 
 | `relative-deadline-trap` | HOLD | HOLD | 0 | 1/1 | PASS |
 | `fully-supported-contract` | PROCEED | PROCEED | 0 | 0/0 | PASS |
 | `cross-field-evidence-contamination` | HOLD | HOLD | 0 | 3/3 | PASS |
-| `provider-independent-explicit-contract` | PROCEED | PROCEED | 0 | 0/0 | PASS |
+| `provider-failure-safe-hold` | HOLD | HOLD | 0 | 5/5 | PASS |
 
 ## Scope
 

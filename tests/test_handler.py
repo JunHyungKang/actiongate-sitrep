@@ -219,6 +219,13 @@ class FailingLLM:
         raise RuntimeError("provider unavailable")
 
 
+class UnexpectedLLM:
+    model = "unexpected"
+
+    async def complete(self, **_kwargs) -> str:
+        raise AssertionError("explicit complete contracts must not call the LLM")
+
+
 @pytest.mark.asyncio
 async def test_handler_returns_audited_contract_and_questions():
     draft = {
@@ -288,7 +295,7 @@ async def test_provider_failure_still_proceeds_for_explicit_complete_contract():
         attendees=[{"name": "Maya"}],
         agent={},
     )
-    ctx = Ctx(instructions="", tools=[], llm=FailingLLM())
+    ctx = Ctx(instructions="", tools=[], llm=UnexpectedLLM())
 
     result = await handler(agent_input, ctx)
 
@@ -296,3 +303,4 @@ async def test_provider_failure_still_proceeds_for_explicit_complete_contract():
     assert "GREEN - READY" in markdown
     assert "Decision: PROCEED" in markdown
     assert "Verified commitments: 6/6" in markdown
+    assert ctx.logs[0] == "explicit contract complete; skipping LLM extraction"

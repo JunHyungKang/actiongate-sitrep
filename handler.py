@@ -537,19 +537,20 @@ async def handler(input: AgentInput, ctx: Ctx) -> dict[str, Any]:
     title = str(input.task.get("title") or "Untitled action").strip()
     source = _source_text(input)
     prompt = f"Analyze this meeting action. Return JSON only using this schema:\n{SCHEMA}\n\nSOURCE:\n{source}"
+    deterministic_audited = _audit_plan(_deterministic_contract(title, source), source)
 
-    try:
-        ctx.log("extracting an evidence-backed execution contract")
-        raw_draft = await ctx.llm.complete(system=SYSTEM_PROMPT, prompt=prompt, temperature=0.1)
-        draft = _extract_json(raw_draft)
-    except Exception as exc:  # The endpoint should still return a useful artifact.
-        ctx.log(f"structured extraction failed: {type(exc).__name__}")
-        draft = {"objective": {"value": title, "evidence": title}, "questions": []}
-
-    audited = _merge_audited(
-        _audit_plan(draft, source),
-        _audit_plan(_deterministic_contract(title, source), source),
-    )
+    if not _missing_fields(deterministic_audited):
+        ctx.log("explicit contract complete; skipping LLM extraction")
+        audited = deterministic_audited
+    else:
+        try:
+            ctx.log("extracting an evidence-backed execution contract")
+            raw_draft = await ctx.llm.complete(system=SYSTEM_PROMPT, prompt=prompt, temperature=0.1)
+            draft = _extract_json(raw_draft)
+        except Exception as exc:  # The endpoint should still return a useful artifact.
+            ctx.log(f"structured extraction failed: {type(exc).__name__}")
+            draft = {"objective": {"value": title, "evidence": title}, "questions": []}
+        audited = _merge_audited(_audit_plan(draft, source), deterministic_audited)
     report = _render(title, audited)
     html_report = _render_html(title, audited)
     ctx.log(f"readiness={_readiness_score(audited)} missing={len(_missing_fields(audited))}")

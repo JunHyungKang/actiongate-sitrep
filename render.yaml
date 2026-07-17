@@ -19,3 +19,7 @@ services:
         value: qwen/qwen3-next-80b-a3b-instruct:free
       - key: LLM_TIMEOUT_SECONDS
         value: "45"
+      - key: LLM_MAX_INPUT_CHARS
+        value: "12000"
+      - key: LLM_MAX_DAILY_CALLS
+        value: "50"

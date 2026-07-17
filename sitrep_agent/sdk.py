@@ -14,6 +14,7 @@ import hashlib
 import hmac
 import os
 import time
+import asyncio
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -27,6 +28,24 @@ LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://localhost:11434/v1")
 LLM_API_KEY = os.getenv("LLM_API_KEY")  # Ollama ignores; required for hosted providers.
 MODEL = os.getenv("MODEL", "llama3.2:1b")
 LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "45"))
+LLM_MAX_INPUT_CHARS = int(os.getenv("LLM_MAX_INPUT_CHARS", "12000"))
+LLM_MAX_DAILY_CALLS = int(os.getenv("LLM_MAX_DAILY_CALLS", "50"))
+
+_llm_usage_day = ""
+_llm_usage_count = 0
+_llm_usage_lock = asyncio.Lock()
+
+
+async def _reserve_llm_call() -> None:
+    global _llm_usage_count, _llm_usage_day
+    async with _llm_usage_lock:
+        today = time.strftime("%Y-%m-%d", time.gmtime())
+        if today != _llm_usage_day:
+            _llm_usage_day = today
+            _llm_usage_count = 0
+        if LLM_MAX_DAILY_CALLS <= 0 or _llm_usage_count >= LLM_MAX_DAILY_CALLS:
+            raise RuntimeError("LLM daily call limit reached")
+        _llm_usage_count += 1
 
 
 def verify_signature(timestamp: str | None, signature: str | None, body: bytes) -> bool:
@@ -60,6 +79,9 @@ class LLM:
         self.model = model
 
     async def complete(self, system: str, prompt: str, temperature: float = 0.7) -> str:
+        if len(system) + len(prompt) > LLM_MAX_INPUT_CHARS:
+            raise RuntimeError("LLM input limit exceeded")
+        await _reserve_llm_call()
         url = LLM_BASE_URL.rstrip("/") + "/chat/completions"
         headers = {"Content-Type": "application/json"}
         if LLM_API_KEY:

@@ -16,9 +16,9 @@ steering meeting.
 ## Expected Behavior
 
 ActionGate must not assign the action to Maya merely because she appears first.
-It must not convert "next week" or "Friday" into a precise deadline. It should
-confirm the security review, SOC2 concern, legal lead time, and requested rollout
-plan using source evidence.
+It must not convert "next week" or "Friday" into a precise deadline. Any fact it
+does confirm must preserve an exact quote from the supplied task or meeting
+summary; unsupported model output must be discarded.
 
 The result should be RED or YELLOW and ask:
 

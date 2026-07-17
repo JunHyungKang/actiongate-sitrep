@@ -158,6 +158,86 @@ def _clean_text_list(value: Any, limit: int = 8) -> list[str]:
     return result
 
 
+def _first_match(source: str, patterns: tuple[str, ...]) -> dict[str, str] | None:
+    for pattern in patterns:
+        if match := re.search(pattern, source, re.IGNORECASE | re.MULTILINE):
+            value = match.group("value").strip(" \t.\n")
+            evidence = match.group(0).strip()
+            if value:
+                return {"value": value, "evidence": evidence}
+    return None
+
+
+def _deterministic_contract(title: str, source: str) -> dict[str, Any]:
+    """Recover explicit commitments when the optional LLM is unavailable."""
+    owner = _first_match(
+        source,
+        (
+            r"\b(?:owner|assignee|responsible person)\s*(?:is|:|-)\s*(?P<value>[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*){0,2})\b",
+            r"\b(?P<value>[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*){0,2})\s+(?:owns\b|is\s+(?:the\s+)?(?:owner|assignee)\b|is\s+responsible\b)",
+            r"\b(?:assigned|assign)\s+to\s+(?P<value>[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*){0,2})\b",
+        ),
+    )
+    deadline = _first_match(
+        source,
+        (
+            r"\b(?:deadline|due|review date)\s*:\s*(?P<value>20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}\s+(?:(?:[01]?\d|2[0-3]):[0-5]\d|\d{1,2}(?::[0-5]\d)?\s*(?:am|pm))\s*(?:UTC|GMT|KST|JST|EST|EDT|CST|CDT|MST|MDT|PST|PDT|CET|CEST|AEST|AEDT|[+-]\d{2}:?\d{2}))\b",
+            r"\b(?:deliver|complete|finish|send|submit)(?:ed)?\s+by\s+(?P<value>20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}\s+(?:(?:[01]?\d|2[0-3]):[0-5]\d|\d{1,2}(?::[0-5]\d)?\s*(?:am|pm))\s*(?:UTC|GMT|KST|JST|EST|EDT|CST|CDT|MST|MDT|PST|PDT|CET|CEST|AEST|AEDT|[+-]\d{2}:?\d{2}))\b",
+        ),
+    )
+
+    def labeled_list(label: str) -> list[dict[str, str]]:
+        fact = _first_match(source, (rf"\b{label}\s*:\s*(?P<value>[^.\n]+)",))
+        return [fact] if fact else []
+
+    deliverables = labeled_list(r"deliverable")
+    acceptance = labeled_list(r"(?:definition of done|acceptance criteria)")
+    dependencies = labeled_list(r"(?:dependency|dependencies)")
+    objective = _first_match(source, (r"\bobjective\s*:\s*(?P<value>[^.\n]+)",)) or {
+        "value": title,
+        "evidence": title,
+    }
+    next_steps: list[dict[str, str]] = []
+    if owner and deadline and deliverables:
+        next_steps.append(
+            {
+                "action": f"Deliver {deliverables[0]['value']}",
+                "owner": owner["value"],
+                "timing": deadline["value"],
+            }
+        )
+    return {
+        "objective": objective,
+        "owner": owner,
+        "deadline": deadline,
+        "deliverables": deliverables,
+        "acceptance_criteria": acceptance,
+        "dependencies": dependencies,
+        "risks": [],
+        "next_steps": next_steps,
+        "questions": [],
+    }
+
+
+def _merge_audited(primary: dict[str, Any], fallback: dict[str, Any]) -> dict[str, Any]:
+    merged = dict(primary)
+    for key in ("objective", "owner", "deadline"):
+        if not merged.get(key):
+            merged[key] = fallback.get(key)
+    for key in ("deliverables", "acceptance_criteria", "dependencies"):
+        items = list(merged.get(key) or [])
+        seen = {(_normalize(item["value"]), _normalize(item["evidence"])) for item in items}
+        for item in fallback.get(key) or []:
+            identity = (_normalize(item["value"]), _normalize(item["evidence"]))
+            if identity not in seen:
+                items.append(item)
+                seen.add(identity)
+        merged[key] = items
+    if not merged.get("next_steps"):
+        merged["next_steps"] = fallback.get("next_steps") or []
+    return merged
+
+
 def _audit_plan(plan: dict[str, Any], source: str) -> dict[str, Any]:
     # Being listed as an attendee is not evidence that a person owns the action.
     action_source = "\n".join(
@@ -466,7 +546,10 @@ async def handler(input: AgentInput, ctx: Ctx) -> dict[str, Any]:
         ctx.log(f"structured extraction failed: {type(exc).__name__}")
         draft = {"objective": {"value": title, "evidence": title}, "questions": []}
 
-    audited = _audit_plan(draft, source)
+    audited = _merge_audited(
+        _audit_plan(draft, source),
+        _audit_plan(_deterministic_contract(title, source), source),
+    )
     report = _render(title, audited)
     html_report = _render_html(title, audited)
     ctx.log(f"readiness={_readiness_score(audited)} missing={len(_missing_fields(audited))}")

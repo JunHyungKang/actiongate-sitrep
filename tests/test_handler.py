@@ -2,7 +2,14 @@ import json
 
 import pytest
 
-from handler import _audit_plan, _extract_json, _render, _render_html, handler
+from handler import (
+    _audit_plan,
+    _deterministic_contract,
+    _extract_json,
+    _render,
+    _render_html,
+    handler,
+)
 from sitrep_agent.sdk import AgentInput, Ctx
 
 
@@ -181,6 +188,20 @@ def test_resolved_contract_produces_proceed_packet():
     assert "fully specified and ready to hand off" in markdown
 
 
+def test_deterministic_contract_extracts_only_explicit_labeled_commitments():
+    source = """Task title: Ship Acme rollout plan
+Task description: Maya will deliver the Acme rollout plan by 2026-07-20 17:00 KST.
+Meeting summary: Objective: Ship Acme rollout plan. Maya owns the rollout plan. Deadline: 2026-07-20 17:00 KST. Deliverable: Acme rollout plan. Definition of done: Acme approves the rollout plan. Dependency: legal approval.
+Meeting attendees: Maya"""
+    audited = _audit_plan(_deterministic_contract("Ship Acme rollout plan", source), source)
+
+    assert audited["owner"]["value"] == "Maya"
+    assert audited["deadline"]["value"] == "2026-07-20 17:00 KST"
+    assert audited["deliverables"][0]["value"] == "Acme rollout plan"
+    assert audited["acceptance_criteria"][0]["value"] == "Acme approves the rollout plan"
+    assert audited["dependencies"][0]["value"] == "legal approval"
+
+
 class FakeLLM:
     model = "fake"
 
@@ -250,3 +271,28 @@ async def test_provider_failure_returns_a_safe_hold_packet():
     assert "Who is the directly responsible owner?" in markdown
     assert "Maya Chen" not in markdown
     assert "structured extraction failed" in ctx.logs[1]
+
+
+@pytest.mark.asyncio
+async def test_provider_failure_still_proceeds_for_explicit_complete_contract():
+    agent_input = AgentInput(
+        task={
+            "title": "Ship Acme rollout plan",
+            "description": "Maya will deliver the Acme rollout plan by 2026-07-20 17:00 KST.",
+        },
+        summary=(
+            "Objective: Ship Acme rollout plan. Maya owns the rollout plan. "
+            "Deadline: 2026-07-20 17:00 KST. Deliverable: Acme rollout plan. "
+            "Definition of done: Acme approves the rollout plan. Dependency: legal approval."
+        ),
+        attendees=[{"name": "Maya"}],
+        agent={},
+    )
+    ctx = Ctx(instructions="", tools=[], llm=FailingLLM())
+
+    result = await handler(agent_input, ctx)
+
+    markdown = result["artifacts"][0]["content"]
+    assert "GREEN - READY" in markdown
+    assert "Decision: PROCEED" in markdown
+    assert "Verified commitments: 6/6" in markdown

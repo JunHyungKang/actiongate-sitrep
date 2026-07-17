@@ -28,16 +28,19 @@ dependencies are all confirmed.
 ```mermaid
 flowchart LR
     A[Signed SitRep task] --> B[Typed LLM extraction]
-    B --> C[Deterministic evidence policy]
-    C --> D{All commitments verified?}
-    D -->|No| E[HOLD plus clarification packet]
-    D -->|Yes| F[PROCEED plus handoff packet]
-    E --> G[HTML approval packet and Markdown audit]
-    F --> G
+    A --> C[Explicit commitment extractor]
+    B --> D[Deterministic evidence policy]
+    C --> D
+    D --> E{All commitments verified?}
+    E -->|No| F[HOLD plus clarification packet]
+    E -->|Yes| G[PROCEED plus handoff packet]
+    F --> H[Markdown audit and HTML packet]
+    G --> H
 ```
 
 The model proposes structure; it cannot override the evidence, ownership,
-deadline, or readiness gates.
+deadline, or readiness gates. Explicitly labeled contracts remain actionable
+when the model provider is unavailable.
 
 ## Output
 

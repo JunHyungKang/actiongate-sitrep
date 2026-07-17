@@ -30,12 +30,13 @@ week" are never promoted to precise deadlines.
 
 ## How We Built It
 
-The Code Track agent uses one constrained LLM pass to extract a typed execution
-contract. A deterministic Python policy engine then rejects every confirmed fact
-whose value and evidence do not appear in the task or meeting summary. The model
-cannot override the owner, deadline, or readiness gates. The final artifacts are
-rendered from the audited structure, not directly from free text: a detailed
-Markdown contract and a decision-first HTML approval packet for Marketplace users.
+The Code Track agent combines a constrained LLM pass with a deterministic
+extractor for explicitly labeled commitments. A Python policy engine then
+rejects every confirmed fact whose value and evidence do not appear in the task
+or meeting summary. The model cannot override the owner, deadline, or readiness
+gates, and provider failure cannot block a fully explicit contract. The final
+artifacts are rendered from the audited structure, not directly from free text:
+a detailed Markdown contract and a decision-first HTML approval packet.
 
 ## Challenges
 
@@ -50,7 +51,7 @@ the confirmed contract and GREEN status for source-supported commitments.
 - an eight-case adversarial policy suite that reduced false-PROCEED decisions
   from five to zero versus a presence-only baseline;
 - explicit handling of vague deadlines;
-- graceful fallback when structured model output fails;
+- provider-independent recovery of explicit complete contracts;
 - regression tests for the main unsafe-execution cases;
 - no required third-party integration beyond an OpenAI-compatible model.
 

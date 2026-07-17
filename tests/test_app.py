@@ -12,8 +12,10 @@ import sitrep_agent.sdk as sdk
 client = TestClient(app_module.app)
 
 
-def test_health_endpoint():
-    assert client.get("/health").json() == {"ok": True}
+def test_health_endpoint(monkeypatch):
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "1234567890abcdef")
+
+    assert client.get("/health").json() == {"ok": True, "version": "1234567"}
 
 
 def test_run_rejects_invalid_signature(monkeypatch):

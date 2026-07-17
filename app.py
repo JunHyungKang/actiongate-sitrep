@@ -9,6 +9,8 @@ Both /run and /test verify the SitRep request signature (see sdk.verify_signatur
 """
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
@@ -20,7 +22,10 @@ app = FastAPI(title="SitRep Agent")
 
 @app.get("/health")
 async def health():
-    return {"ok": True}
+    return {
+        "ok": True,
+        "version": os.getenv("RENDER_GIT_COMMIT", "local")[:7],
+    }
 
 
 async def _handle(request: Request) -> Response | dict:

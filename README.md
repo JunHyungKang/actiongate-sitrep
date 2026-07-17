@@ -77,7 +77,8 @@ provider can be configured with `LLM_BASE_URL`, `LLM_API_KEY`, and `MODEL`.
 
 For the hosted deployment, set `SITREP_AGENT_SECRET`, `LLM_API_KEY`, and the
 OpenRouter-compatible values already declared in `render.yaml`. Confirm
-`/health` returns `{"ok":true}` before using the Studio Test button.
+`/health` returns `{"ok":true,"version":"<git-sha>"}` before using the Studio
+Test button, so the deployed revision can be verified directly.
 
 See [the demo scenario](docs/demo.md), the
 [adversarial evaluation](docs/evaluation-results.md), and the

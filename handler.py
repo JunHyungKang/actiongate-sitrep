@@ -472,7 +472,7 @@ async def handler(input: AgentInput, ctx: Ctx) -> dict[str, Any]:
     ctx.log(f"readiness={_readiness_score(audited)} missing={len(_missing_fields(audited))}")
     return {
         "artifacts": [
-            {"type": "html", "title": f"ActionGate approval packet - {title}", "content": html_report},
             {"type": "markdown", "title": f"ActionGate audit trail - {title}", "content": report},
+            {"type": "html", "title": f"ActionGate approval packet - {title}", "content": html_report},
         ]
     }

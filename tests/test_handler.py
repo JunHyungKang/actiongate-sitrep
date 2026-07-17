@@ -221,15 +221,15 @@ async def test_handler_returns_audited_contract_and_questions():
 
     result = await handler(agent_input, ctx)
 
-    content = result["artifacts"][1]["content"]
+    content = result["artifacts"][0]["content"]
     assert "RED - BLOCKED" in content or "YELLOW - NEEDS CLARIFICATION" in content
     assert "Who is the directly responsible owner?" in content
     assert "What is the calendar deadline or review date, including timezone?" in content
     assert "| Owner | Not confirmed | - |" in content
     assert "| 1 | Confirm the owner and exact deadline | TBD | TBD |" in content
     assert "Copy-ready clarification request" in content
-    assert [item["type"] for item in result["artifacts"]] == ["html", "markdown"]
-    assert "<script" not in result["artifacts"][0]["content"]
+    assert [item["type"] for item in result["artifacts"]] == ["markdown", "html"]
+    assert "<script" not in result["artifacts"][1]["content"]
     assert len(ctx.logs) == 2
 
 
@@ -245,7 +245,7 @@ async def test_provider_failure_returns_a_safe_hold_packet():
 
     result = await handler(agent_input, ctx)
 
-    markdown = result["artifacts"][1]["content"]
+    markdown = result["artifacts"][0]["content"]
     assert "HOLD" in markdown
     assert "Who is the directly responsible owner?" in markdown
     assert "Maya Chen" not in markdown

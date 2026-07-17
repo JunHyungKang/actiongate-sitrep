@@ -3,9 +3,6 @@
 **Live agent:** [ActionGate on the SitRep Marketplace](https://app.joinsitrep.com/dashboard/marketplace/actiongate--450b1ac1-84b5-415b-9101-5660fc31c79b)<br>
 **Source:** [Public MIT-licensed GitHub repository](https://github.com/JunHyungKang/actiongate-sitrep)
 
-The media gallery should include `docs/actiongate-comparison.png` and
-`docs/actiongate-preview.png` from the repository.
-
 ## Inspiration
 
 Meeting assistants are good at finding action items, but an extracted action is
@@ -22,7 +19,7 @@ one SitRep action it:
 - checks owner, deadline, deliverables, success criteria, and dependencies;
 - assigns a RED, YELLOW, or GREEN readiness gate;
 - separates confirmed facts from inferred risks and proposed steps;
-- generates the smallest set of questions needed to unblock execution;
+- generates a focused question for each missing execution commitment;
 - returns a copy-ready clarification request or a ready-to-handoff decision.
 
 Attendance is never treated as ownership, and relative phrases such as "next
@@ -48,12 +45,19 @@ the confirmed contract and GREEN status for source-supported commitments.
 ## Accomplishments
 
 - deterministic evidence and ownership gates;
-- an eight-case adversarial policy suite that reduced false-PROCEED decisions
+- an eight-case synthetic policy suite that reduced false-PROCEED decisions
   from five to zero versus a presence-only baseline;
 - explicit handling of vague deadlines;
 - provider-independent recovery of explicit complete contracts;
-- regression tests for the main unsafe-execution cases;
+- 44 regression tests covering evidence validation, ownership, deadlines,
+  provider failure, signed requests, output safety, and usage limits;
 - no required third-party integration beyond an OpenAI-compatible model.
+
+In signed SitRep Studio runs against the deployed agent, an ambiguous action
+returned `HOLD` at `20/100`, while a fully supported contract returned
+`PROCEED` at `100/100`. These are live contract-completeness results; the
+eight-case false-PROCEED comparison above is a separate deterministic policy
+evaluation rather than an end-to-end model benchmark.
 
 ## What We Learned
 

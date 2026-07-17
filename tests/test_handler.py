@@ -131,9 +131,9 @@ def test_green_requires_every_contract_field():
         "objective": fact("Ship pilot", "Ship pilot"),
         "owner": fact("Maya", "Maya owns the pilot"),
         "deadline": fact("2026-07-20 17:00 KST", "Deadline: 2026-07-20 17:00 KST"),
-        "deliverables": [fact("Rollout plan", "Rollout plan")],
-        "acceptance_criteria": [fact("Approved by Acme", "Approved by Acme")],
-        "dependencies": [fact("Legal review", "Legal review")],
+        "deliverables": [fact("Rollout plan", "Deliverable: Rollout plan")],
+        "acceptance_criteria": [fact("Approved by Acme", "Done when Approved by Acme")],
+        "dependencies": [fact("Legal review", "Dependency: Legal review")],
     }
     source = " ".join(item["evidence"] for key in plan.values() for item in (key if isinstance(key, list) else [key]))
     audited = _audit_plan(plan, f"Task title: {source}\nMeeting attendees:")
@@ -141,6 +141,26 @@ def test_green_requires_every_contract_field():
 
     plan.pop("acceptance_criteria")
     audited = _audit_plan(plan, f"Task title: {source}\nMeeting attendees:")
+    assert "GREEN - READY" not in _render("Pilot", audited)
+
+
+def test_one_ownership_quote_cannot_fill_execution_contract_lists():
+    evidence = "Maya owns the rollout plan"
+    plan = {
+        "objective": fact("Ship pilot", "Ship pilot"),
+        "owner": fact("Maya", evidence),
+        "deadline": fact("2026-07-20 17:00 KST", "Deadline: 2026-07-20 17:00 KST"),
+        "deliverables": [fact(evidence, evidence)],
+        "acceptance_criteria": [fact(evidence, evidence)],
+        "dependencies": [fact(evidence, evidence)],
+    }
+    source = f"Task title: Ship pilot\n{evidence}\nDeadline: 2026-07-20 17:00 KST"
+
+    audited = _audit_plan(plan, source)
+
+    assert audited["deliverables"] == []
+    assert audited["acceptance_criteria"] == []
+    assert audited["dependencies"] == []
     assert "GREEN - READY" not in _render("Pilot", audited)
 
 
@@ -200,6 +220,20 @@ Meeting attendees: Maya"""
     assert audited["deliverables"][0]["value"] == "Acme rollout plan"
     assert audited["acceptance_criteria"][0]["value"] == "Acme approves the rollout plan"
     assert audited["dependencies"][0]["value"] == "legal approval"
+
+
+def test_deterministic_contract_preserves_explicit_risk():
+    source = "Task title: Launch pilot\nMeeting summary: Risk: Legal review may delay launch."
+
+    audited = _audit_plan(_deterministic_contract("Launch pilot", source), source)
+
+    assert audited["risks"] == [
+        {
+            "value": "Legal review may delay launch",
+            "evidence": "Risk: Legal review may delay launch",
+            "kind": "stated",
+        }
+    ]
 
 
 class FakeLLM:

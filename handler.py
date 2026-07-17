@@ -86,6 +86,32 @@ def _supported_list(value: Any, source: str) -> list[dict[str, str]]:
     return [fact for item in value if (fact := _supported_fact(item, source))]
 
 
+SEMANTIC_EVIDENCE_PATTERNS = {
+    "deliverables": (
+        r"\bdeliverable\b",
+        r"\b(?:deliver|create|prepare|produce|send|submit)(?:ed|s)?\b",
+    ),
+    "acceptance_criteria": (
+        r"\b(?:definition of done|acceptance criteria|done when|complete when|success means)\b",
+        r"\b(?:approved|accepted|verified|validated|passes?)\b",
+    ),
+    "dependencies": (
+        r"\bdependenc(?:y|ies)\b",
+        r"\b(?:depends on|blocked by|requires?|needs?)\b",
+        r"\bapproval\b",
+    ),
+}
+
+
+def _supported_semantic_list(value: Any, source: str, field: str) -> list[dict[str, str]]:
+    patterns = SEMANTIC_EVIDENCE_PATTERNS[field]
+    return [
+        fact
+        for fact in _supported_list(value, source)
+        if any(re.search(pattern, _normalize(fact["evidence"])) for pattern in patterns)
+    ]
+
+
 def _supported_owner(value: Any, source: str) -> dict[str, str] | None:
     fact = _supported_fact(value, source)
     if not fact:
@@ -193,6 +219,7 @@ def _deterministic_contract(title: str, source: str) -> dict[str, Any]:
     deliverables = labeled_list(r"deliverable")
     acceptance = labeled_list(r"(?:definition of done|acceptance criteria)")
     dependencies = labeled_list(r"(?:dependency|dependencies)")
+    stated_risk = _first_match(source, (r"\brisk\s*:\s*(?P<value>[^.\n]+)",))
     objective = _first_match(source, (r"\bobjective\s*:\s*(?P<value>[^.\n]+)",)) or {
         "value": title,
         "evidence": title,
@@ -213,7 +240,7 @@ def _deterministic_contract(title: str, source: str) -> dict[str, Any]:
         "deliverables": deliverables,
         "acceptance_criteria": acceptance,
         "dependencies": dependencies,
-        "risks": [],
+        "risks": ([{**stated_risk, "kind": "stated"}] if stated_risk else []),
         "next_steps": next_steps,
         "questions": [],
     }
@@ -235,6 +262,15 @@ def _merge_audited(primary: dict[str, Any], fallback: dict[str, Any]) -> dict[st
         merged[key] = items
     if not merged.get("next_steps"):
         merged["next_steps"] = fallback.get("next_steps") or []
+    risk_keys = {
+        (_normalize(item["value"]), _normalize(item.get("evidence", "")))
+        for item in merged.get("risks") or []
+    }
+    for item in fallback.get("risks") or []:
+        identity = (_normalize(item["value"]), _normalize(item.get("evidence", "")))
+        if identity not in risk_keys:
+            merged.setdefault("risks", []).append(item)
+            risk_keys.add(identity)
     return merged
 
 
@@ -247,9 +283,15 @@ def _audit_plan(plan: dict[str, Any], source: str) -> dict[str, Any]:
         "objective": _supported_fact(plan.get("objective"), source),
         "owner": _supported_owner(plan.get("owner"), action_source),
         "deadline": _specific_deadline(_supported_fact(plan.get("deadline"), action_source)),
-        "deliverables": _supported_list(plan.get("deliverables"), source),
-        "acceptance_criteria": _supported_list(plan.get("acceptance_criteria"), source),
-        "dependencies": _supported_list(plan.get("dependencies"), source),
+        "deliverables": _supported_semantic_list(
+            plan.get("deliverables"), source, "deliverables"
+        ),
+        "acceptance_criteria": _supported_semantic_list(
+            plan.get("acceptance_criteria"), source, "acceptance_criteria"
+        ),
+        "dependencies": _supported_semantic_list(
+            plan.get("dependencies"), source, "dependencies"
+        ),
         "questions": _clean_text_list(plan.get("questions")),
     }
 
@@ -394,7 +436,7 @@ def _render(title: str, plan: dict[str, Any]) -> str:
             evidence = f" - evidence: \"{_cell(risk['evidence'])}\"" if risk["kind"] == "stated" else ""
             lines.append(f"- **{label}:** {risk['value']}{evidence}")
     else:
-        lines.append("- No risks were identified from the supplied context.")
+        lines.append("- No source-backed risks were extracted from the supplied context.")
 
     questions = _questions(plan)
     lines.extend(["", "## Questions to close"])
@@ -477,7 +519,7 @@ def _render_html(title: str, plan: dict[str, Any]) -> str:
         f"{escape(risk['value'], quote=True)}"
         f"{' — evidence: &quot;' + escape(risk['evidence'], quote=True) + '&quot;' if risk['kind'] == 'stated' else ''}</li>"
         for risk in risks
-    ) or "<li>No risks were identified from the supplied context.</li>"
+    ) or "<li>No source-backed risks were extracted from the supplied context.</li>"
 
     clarification = escape(_clarification_request(title, plan), quote=True)
     return f"""<!doctype html>

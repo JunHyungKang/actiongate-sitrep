@@ -27,7 +27,8 @@ Last verified: 2026-07-17 KST
 - Explicit Studio PROCEED case: `100/100`, `GREEN - READY`, `PROCEED`, `6/6`
 - Public LLM usage guard: explicit complete contracts skip the LLM; remaining calls are bounded to 12,000 input characters and 50 calls per UTC day per service process
 - Local preflight: passing
-- Tests: 36 passing, including a real HMAC request and adversarial evaluation checks
+- Tests: 44 passing, including a real HMAC request, semantic evidence checks,
+  malformed-payload handling, and adversarial evaluation checks
 
 ## Pending
 

@@ -10,6 +10,7 @@ Both /run and /test verify the SitRep request signature (see sdk.verify_signatur
 from __future__ import annotations
 
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 
 from handler import handler
 from sitrep_agent.sdk import MODEL, AgentInput, Ctx, LLM, verify_signature
@@ -34,7 +35,12 @@ async def _handle(request: Request) -> Response | dict:
 
     import json
 
-    payload = json.loads(body or b"{}")
+    try:
+        payload = json.loads(body or b"{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JSONResponse(status_code=400, content={"error": "invalid JSON body"})
+    if not isinstance(payload, dict):
+        return JSONResponse(status_code=400, content={"error": "JSON body must be an object"})
     agent_input = AgentInput.from_payload(payload)
     # A remote agent runs on ITS OWN LLM (your MODEL env) — not whatever model
     # name SitRep happens to send (that may be a cloud name your Ollama lacks).

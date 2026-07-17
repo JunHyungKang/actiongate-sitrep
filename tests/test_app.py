@@ -74,3 +74,21 @@ def test_test_endpoint_preserves_artifact_contract(monkeypatch):
         "artifacts": [{"type": "markdown", "title": "Packet", "content": "Ready"}],
         "logs": ["complete"],
     }
+
+
+def test_run_rejects_malformed_json(monkeypatch):
+    monkeypatch.setattr(app_module, "verify_signature", lambda *_args: True)
+
+    response = client.post("/run", content=b"{not-json", headers={"Content-Type": "application/json"})
+
+    assert response.status_code == 400
+    assert response.json() == {"error": "invalid JSON body"}
+
+
+def test_run_rejects_non_object_payload(monkeypatch):
+    monkeypatch.setattr(app_module, "verify_signature", lambda *_args: True)
+
+    response = client.post("/run", json=[])
+
+    assert response.status_code == 400
+    assert response.json() == {"error": "JSON body must be an object"}

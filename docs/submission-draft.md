@@ -3,6 +3,9 @@
 **Live agent:** [ActionGate on the SitRep Marketplace](https://app.joinsitrep.com/dashboard/marketplace/actiongate--450b1ac1-84b5-415b-9101-5660fc31c79b)<br>
 **Source:** [Public MIT-licensed GitHub repository](https://github.com/JunHyungKang/actiongate-sitrep)
 
+The media gallery should include `docs/actiongate-comparison.png` and
+`docs/actiongate-preview.png` from the repository.
+
 ## Inspiration
 
 Meeting assistants are good at finding action items, but an extracted action is

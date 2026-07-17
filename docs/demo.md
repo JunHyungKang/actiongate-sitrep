@@ -1,5 +1,7 @@
 # ActionGate Demo
 
+![ActionGate HOLD to PROCEED comparison](actiongate-comparison.png)
+
 ## Input
 
 **Action task:** Follow up with Acme about the pilot next week.

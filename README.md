@@ -11,6 +11,8 @@ approval-ready execution packet. It confirms only facts supported by exact
 source quotes, scores readiness, rejects unsafe assumptions, and creates a
 copy-ready clarification request that unblocks the work.
 
+![ActionGate HOLD to PROCEED flow](docs/actiongate-comparison.png)
+
 ## Why It Exists
 
 Generic meeting agents often turn vague phrases into confident assignments.

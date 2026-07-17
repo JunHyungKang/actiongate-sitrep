@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ActionGate HOLD to PROCEED</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f5f6f8;
+      color: #17191d;
+      font-family: Arial, Helvetica, sans-serif;
+      letter-spacing: 0;
+    }
+    main { width: 1200px; height: 675px; margin: 0 auto; background: #fff; }
+    header { padding: 34px 52px 24px; border-bottom: 1px solid #d9dde5; }
+    .eyebrow { font-size: 13px; font-weight: 700; color: #545b66; text-transform: uppercase; }
+    h1 { margin: 6px 0 8px; font-size: 34px; line-height: 1.2; }
+    header p { margin: 0; color: #545b66; font-size: 17px; }
+    .flow { display: grid; grid-template-columns: 1fr 92px 1fr; gap: 18px; padding: 28px 52px 20px; }
+    .panel { border: 1px solid #cfd4dc; border-top-width: 7px; border-radius: 6px; padding: 22px; min-height: 330px; }
+    .hold { border-top-color: #b3261e; }
+    .proceed { border-top-color: #137333; }
+    .status { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
+    .decision { font-size: 28px; font-weight: 800; }
+    .hold .decision { color: #b3261e; }
+    .proceed .decision { color: #137333; }
+    .score { font-size: 18px; font-weight: 700; }
+    h2 { margin: 18px 0 10px; font-size: 18px; }
+    ul { margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.65; }
+    .evidence { margin-top: 16px; padding: 13px 15px; background: #f4f6f8; border-left: 4px solid #7a828e; font-size: 14px; line-height: 1.5; }
+    .arrow { display: flex; flex-direction: column; justify-content: center; align-items: center; color: #545b66; }
+    .arrow strong { font-size: 42px; color: #23262b; }
+    .arrow span { margin-top: 10px; text-align: center; font-size: 13px; font-weight: 700; }
+    .metrics { margin: 0 52px; display: grid; grid-template-columns: 1.4fr 1fr 1fr; border: 1px solid #cfd4dc; }
+    .metric { padding: 15px 18px; border-right: 1px solid #cfd4dc; }
+    .metric:last-child { border-right: 0; }
+    .metric-label { color: #545b66; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .metric-value { margin-top: 3px; font-size: 20px; font-weight: 800; }
+    .bad { color: #b3261e; }
+    .good { color: #137333; }
+    footer { padding: 15px 52px; color: #545b66; font-size: 12px; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Evidence-first execution control</div>
+    <h1>ActionGate turns ambiguity into an executable contract</h1>
+    <p>The model proposes structure. Deterministic policy decides whether work may begin.</p>
+  </header>
+  <section class="flow">
+    <article class="panel hold">
+      <div class="status"><div class="decision">HOLD</div><div class="score">30 / 100</div></div>
+      <h2>Ambiguous meeting action</h2>
+      <ul>
+        <li>Attendee mentioned, but no accountable owner</li>
+        <li>“Next week” is not an execution deadline</li>
+        <li>Deliverable and definition of done are missing</li>
+        <li>Four targeted questions generated automatically</li>
+      </ul>
+      <div class="evidence"><strong>Rejected assumption:</strong><br>“Maya attended the meeting” does not mean “Maya owns the work.”</div>
+    </article>
+    <div class="arrow"><strong>→</strong><span>Clarify only<br>what is missing</span></div>
+    <article class="panel proceed">
+      <div class="status"><div class="decision">PROCEED</div><div class="score">100 / 100</div></div>
+      <h2>Verified execution contract</h2>
+      <ul>
+        <li>Owner explicitly assigned to Maya</li>
+        <li>Deadline includes date, time, and timezone</li>
+        <li>Launch plan and approval criteria confirmed</li>
+        <li>Legal dependency preserved with source evidence</li>
+      </ul>
+      <div class="evidence"><strong>Accepted evidence:</strong><br>“Owner: Maya. Deadline: 2026-07-20 17:00 KST.”</div>
+    </article>
+  </section>
+  <section class="metrics">
+    <div class="metric"><div class="metric-label">Adversarial policy suite</div><div class="metric-value">8 reproducible cases</div></div>
+    <div class="metric"><div class="metric-label">Presence-only baseline</div><div class="metric-value bad">5 false PROCEED</div></div>
+    <div class="metric"><div class="metric-label">ActionGate</div><div class="metric-value good">0 false PROCEED</div></div>
+  </section>
+  <footer>Source-backed facts remain confirmed. Proposed steps and inferred risks stay visibly unconfirmed.</footer>
+</main>
+</body>
+</html>

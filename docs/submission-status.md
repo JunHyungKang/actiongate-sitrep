@@ -1,17 +1,17 @@
 # Submission Status
 
-Last verified: 2026-07-17 KST
+Last verified: 2026-07-17 15:48 KST
 
 ## Live Snapshot
 
 - Kaggle deadline: 2026-07-20 11:00 KST
 - Kaggle entrants: 4 teams; current account entry state: not joined
 - Deployed endpoint: <https://sitrep-agent.onrender.com>
-- Endpoint health: `200 {"ok":true}`
+- Endpoint health: `200 {"ok":true,"version":"84cfb17"}`
 - Marketplace listing: <https://app.joinsitrep.com/dashboard/marketplace/actiongate--450b1ac1-84b5-415b-9101-5660fc31c79b>
 - Marketplace state: published, 1 install, 0 runs
-- Deployed commit: `076d209`
-- Repository `main` contains newer changes; Render redeploy required before final submission
+- Deployed commit: `84cfb17`
+- Render deploy: `dep-d9csub8k1i2s73cigr40`, status `live`
 
 ## Complete
 
@@ -26,6 +26,8 @@ Last verified: 2026-07-17 KST
 - Studio result preview: Markdown-first output verified with a visible `HOLD` decision
 - Explicit Studio HOLD case: `20/100`, `RED - BLOCKED`, `HOLD`, `1/6`
 - Explicit Studio PROCEED case: `100/100`, `GREEN - READY`, `PROCEED`, `6/6`
+- Latest signed endpoint probe on `84cfb17`: ambiguous `HOLD 20/100, 1/6`;
+  complete `PROCEED 100/100, 6/6`; invalid signature rejected with `401`
 - Public LLM usage guard: explicit complete contracts skip the LLM; remaining calls are bounded to 12,000 input characters and 50 calls per UTC day per service process
 - Local preflight: passing
 - Tests: 46 passing, including a real HMAC request, semantic evidence checks,

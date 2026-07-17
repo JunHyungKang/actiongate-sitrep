@@ -1,11 +1,13 @@
 # Submission Status
 
-Last verified: 2026-07-17 15:55 KST
+Last verified: 2026-07-17 16:16 KST
 
 ## Live Snapshot
 
 - Kaggle deadline: 2026-07-20 11:00 KST
 - Kaggle entrants: 4 teams; current account entry state: joined (`userHasEntered=True`)
+- Kaggle writeup: <https://www.kaggle.com/competitions/sit-rep-ai-hackathon/writeups/actiongate-stop-ambiguous-meeting-actions-before>
+- Kaggle submission state: submitted to `The Code Track`
 - Deployed endpoint: <https://sitrep-agent.onrender.com>
 - Endpoint health: `200 {"ok":true,"version":"64d764c"}`
 - Marketplace listing: <https://app.joinsitrep.com/dashboard/marketplace/actiongate--450b1ac1-84b5-415b-9101-5660fc31c79b>
@@ -34,9 +36,11 @@ Last verified: 2026-07-17 15:55 KST
   malformed-payload handling, and adversarial evaluation checks
 - Scenario artifact evaluation: 6/6 decisions correct, 0 false PROCEED,
   0 unsupported confirmed facts, 14/14 missing-field questions, 6/6 safe artifact pairs
+- Final Kaggle writeup submitted with the public GitHub and Marketplace links and
+  two verified media images on 2026-07-17
 
 ## Pending
 
-- Attach the Marketplace and repository URLs, add the prepared media, and submit the final writeup.
+- None. Changes remain allowed until the competition deadline.
 
 Do not record credentials, OTPs, signing secrets, or API keys in this file.

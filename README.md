@@ -44,7 +44,7 @@ when the model provider is unavailable.
 
 ## Output
 
-- RED, YELLOW, or GREEN execution-readiness gate
+- RED, YELLOW, or GREEN contract-completeness gate
 - confirmed contract with source evidence
 - open commitments and clarification questions
 - proposed next steps with visibly unconfirmed owners and timing

@@ -386,7 +386,7 @@ def _render(title: str, plan: dict[str, Any]) -> str:
     lines = [
         f"# ActionGate: {title}",
         "",
-        f"**Execution readiness: {score}/100 - {status}**",
+        f"**Contract completeness: {score}/100 - {status}**",
         f"**Decision: {decision} | Verified commitments: {confirmed_count}/{len(FIELD_SPECS)}**",
         "",
         "> Only claims backed by an exact quote from the task or meeting summary are treated as confirmed.",
@@ -532,7 +532,7 @@ def _render_html(title: str, plan: dict[str, Any]) -> str:
 <h1 style="font-size:26px;line-height:1.25;margin:6px 0 18px">{escape(title, quote=True)}</h1>
 <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end">
 <div><div style="font-size:12px;color:#525866">Decision</div><strong style="font-size:22px;color:{color}">{decision}</strong></div>
-<div><div style="font-size:12px;color:#525866">Readiness</div><strong style="font-size:22px">{score}/100</strong></div>
+<div><div style="font-size:12px;color:#525866">Contract completeness</div><strong style="font-size:22px">{score}/100</strong></div>
 <div><div style="font-size:12px;color:#525866">Verified</div><strong style="font-size:22px">{confirmed_count}/{len(FIELD_SPECS)}</strong></div>
 </div>
 <div style="height:8px;background:#e7e9ee;margin-top:20px"><div style="width:{score}%;height:8px;background:{color}"></div></div>
@@ -595,7 +595,7 @@ async def handler(input: AgentInput, ctx: Ctx) -> dict[str, Any]:
         audited = _merge_audited(_audit_plan(draft, source), deterministic_audited)
     report = _render(title, audited)
     html_report = _render_html(title, audited)
-    ctx.log(f"readiness={_readiness_score(audited)} missing={len(_missing_fields(audited))}")
+    ctx.log(f"completeness={_readiness_score(audited)} missing={len(_missing_fields(audited))}")
     return {
         "artifacts": [
             {"type": "markdown", "title": f"ActionGate audit trail - {title}", "content": report},

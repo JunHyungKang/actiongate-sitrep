@@ -17,13 +17,14 @@ one SitRep action it:
 
 - confirms only facts backed by exact source evidence;
 - checks owner, deadline, deliverables, success criteria, and dependencies;
-- assigns a RED, YELLOW, or GREEN readiness gate;
+- assigns a RED, YELLOW, or GREEN contract-completeness gate;
 - separates confirmed facts from inferred risks and proposed steps;
 - generates a focused question for each missing execution commitment;
 - returns a copy-ready clarification request or a ready-to-handoff decision.
 
 Attendance is never treated as ownership, and relative phrases such as "next
-week" are never promoted to precise deadlines.
+week" are never promoted to precise deadlines. The score is a weighted checklist
+of six required commitments, not a calibrated probability of success.
 
 ## How We Built It
 

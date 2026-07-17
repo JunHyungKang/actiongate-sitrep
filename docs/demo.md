@@ -32,7 +32,7 @@ The result should be RED or YELLOW and ask:
 
 1. Show a generic model confidently assigning Maya and inventing Monday.
 2. Run the same action through ActionGate.
-3. Highlight the readiness gate and rejected assumptions.
+3. Highlight the contract-completeness gate and rejected assumptions.
 4. Show exact evidence beside each confirmed fact.
 5. Update the source input with a named owner, `2026-07-20 17:00 KST`, the exact
    rollout-plan deliverable, approval criteria, and dependencies, then rerun to

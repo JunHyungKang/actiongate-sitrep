@@ -13,10 +13,10 @@ useful approval packet instead of silently filling those gaps.
 |---|---:|---|
 | Business Impact | 30 | Prevents rework and unsafe handoffs; creates a copy-ready clarification request. |
 | Agent Quality | 25 | Exact-quote audit, deterministic field gates, attendee-owner protection, and safe fallback. |
-| User Experience | 15 | Immediate HOLD/PROCEED decision, readiness score, verified contract, and polished HTML. |
+| User Experience | 15 | Immediate HOLD/PROCEED decision, contract-completeness score, verified contract, and polished HTML. |
 | Innovation | 15 | Treats ambiguity as an execution-control problem rather than another generation prompt. |
 | Execution | 10 | Typed extraction, deterministic policy engine, signature verification, safe fallback, and regression tests. |
-| Documentation | 5 | Public MIT repository, two-minute demo, architecture explanation, and reproducible local setup. |
+| Documentation | 5 | Public MIT repository, two-minute demo script, architecture explanation, and reproducible local setup. |
 
 ## Submission Gate
 

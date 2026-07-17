@@ -25,6 +25,28 @@ def test_attendee_name_is_not_accepted_as_owner():
     assert _audit_plan(plan, SOURCE)["owner"] is None
 
 
+@pytest.mark.parametrize(
+    "evidence",
+    ["Maya attended the meeting", "Maya said Jordan owns the launch plan"],
+)
+def test_person_mention_is_not_accepted_as_owner(evidence: str):
+    source = SOURCE + f"\nAdditional note: {evidence}"
+    assert _audit_plan({"owner": fact("Maya", evidence)}, source)["owner"] is None
+
+
+@pytest.mark.parametrize(
+    ("value", "evidence"),
+    [
+        ("Maya", "Owner: Maya"),
+        ("Maya", "Maya is responsible for the launch plan"),
+        ("Maya", "The launch plan was assigned to Maya"),
+    ],
+)
+def test_direct_assignment_is_accepted_as_owner(value: str, evidence: str):
+    source = SOURCE + f"\nAdditional note: {evidence}"
+    assert _audit_plan({"owner": fact(value, evidence)}, source)["owner"]["value"] == value
+
+
 @pytest.mark.parametrize("deadline", ["next week", "Friday", "tomorrow at 3 PM", "ASAP"])
 def test_vague_deadline_is_not_execution_ready(deadline: str):
     plan = {"deadline": fact(deadline, "next week" if deadline == "next week" else deadline)}
@@ -55,15 +77,53 @@ def test_relative_or_underspecified_numeric_deadline_is_rejected(deadline: str):
 
 def test_absolute_deadline_is_accepted():
     deadline = "2026-07-20 17:00 KST"
-    source = SOURCE + f"\nAdditional note: {deadline}"
-    assert _audit_plan({"deadline": fact(deadline, deadline)}, source)["deadline"]["value"] == deadline
+    evidence = f"Deadline: {deadline}"
+    source = SOURCE + f"\nAdditional note: {evidence}"
+    assert _audit_plan({"deadline": fact(deadline, evidence)}, source)["deadline"]["value"] == deadline
+
+
+@pytest.mark.parametrize(
+    ("deadline", "evidence"),
+    [
+        ("2026-07-20", "Deadline: 2026-07-20"),
+        ("2026-02-30 17:00 KST", "Deadline: 2026-02-30 17:00 KST"),
+        ("2026-07-20 17:00 KST", "Do not start before 2026-07-20 17:00 KST"),
+    ],
+)
+def test_non_actionable_date_is_not_accepted_as_deadline(deadline: str, evidence: str):
+    source = SOURCE + f"\nAdditional note: {evidence}"
+    assert _audit_plan({"deadline": fact(deadline, evidence)}, source)["deadline"] is None
+
+
+def test_unrelated_evidence_cannot_confirm_a_risk():
+    risk = {
+        "value": "Customer approved production rollout",
+        "evidence": "Legal needs two business days",
+        "kind": "stated",
+    }
+    source = SOURCE + "\nLegal needs two business days"
+    audited = _audit_plan({"risks": [risk]}, source)
+
+    assert audited["risks"][0]["kind"] == "inferred"
+    assert "**confirmed:**" not in _render("Pilot", audited)
+
+
+def test_exact_risk_evidence_remains_confirmed_and_visible():
+    evidence = "Legal review may delay launch"
+    source = SOURCE + f"\nAdditional note: {evidence}"
+    audited = _audit_plan(
+        {"risks": [{"value": evidence, "evidence": evidence, "kind": "stated"}]}, source
+    )
+
+    assert audited["risks"][0]["kind"] == "stated"
+    assert f'evidence: "{evidence}"' in _render("Pilot", audited)
 
 
 def test_green_requires_every_contract_field():
     plan = {
         "objective": fact("Ship pilot", "Ship pilot"),
         "owner": fact("Maya", "Maya owns the pilot"),
-        "deadline": fact("2026-07-20 17:00 KST", "2026-07-20 17:00 KST"),
+        "deadline": fact("2026-07-20 17:00 KST", "Deadline: 2026-07-20 17:00 KST"),
         "deliverables": [fact("Rollout plan", "Rollout plan")],
         "acceptance_criteria": [fact("Approved by Acme", "Approved by Acme")],
         "dependencies": [fact("Legal review", "Legal review")],

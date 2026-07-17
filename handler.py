@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime
 from html import escape
 from pathlib import Path
 from typing import Any
@@ -85,6 +86,22 @@ def _supported_list(value: Any, source: str) -> list[dict[str, str]]:
     return [fact for item in value if (fact := _supported_fact(item, source))]
 
 
+def _supported_owner(value: Any, source: str) -> dict[str, str] | None:
+    fact = _supported_fact(value, source)
+    if not fact:
+        return None
+    owner = re.escape(_normalize(fact["value"]))
+    evidence = _normalize(fact["evidence"])
+    ownership_patterns = (
+        rf"\b(?:owner|assignee|responsible person)\s*(?:is|:|-)\s*{owner}\b",
+        rf"\b(?:assigned|assign)\s+to\s+{owner}\b",
+        rf"\b{owner}\s+(?:owns\b|is\s+(?:the\s+)?(?:owner|assignee)\b|"
+        rf"is\s+responsible\b|will\s+(?:deliver|prepare|complete|send|create|update|lead|coordinate)\b)",
+        rf"\bresponsibility\s+(?:belongs\s+to|lies\s+with)\s+{owner}\b",
+    )
+    return fact if any(re.search(pattern, evidence) for pattern in ownership_patterns) else None
+
+
 def _specific_deadline(fact: dict[str, str] | None) -> dict[str, str] | None:
     if not fact:
         return None
@@ -101,21 +118,29 @@ def _specific_deadline(fact: dict[str, str] | None) -> dict[str, str] | None:
         "end of day",
     )
     relative_patterns = (r"\bin\s+\d+", r"\bnext\s+\d+", r"\bq[1-4]\b")
-    absolute_patterns = (
-        r"\b20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}\b",
-        r"\b\d{1,2}[-/.]\d{1,2}[-/.]20\d{2}\b",
-        r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
-        r"jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|"
-        r"dec(?:ember)?)\s+\d{1,2},?\s+20\d{2}\b",
-        r"\b\d{1,2}\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|"
-        r"jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|"
-        r"nov(?:ember)?|dec(?:ember)?)\s+20\d{2}\b",
+    evidence = _normalize(fact["evidence"])
+    iso_date = re.search(r"\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b", value)
+    time_pattern = r"\b(?:(?:[01]?\d|2[0-3]):[0-5]\d(?:\s*(?:am|pm))?|\d{1,2}(?::[0-5]\d)?\s*(?:am|pm))\b"
+    timezone_pattern = r"\b(?:utc|gmt|kst|jst|est|edt|cst|cdt|mst|mdt|pst|pdt|cet|cest|aest|aedt)\b|[+-]\d{2}:?\d{2}\b"
+    deadline_semantics = (
+        r"\b(?:deadline|due|review date)\b",
+        r"\b(?:deliver|complete|finish|send|submit)(?:ed)?\s+by\b",
+        r"\bby\s+20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}\b",
     )
+    negative_semantics = ("not before", "do not start before", "starts on", "starts at")
     if (
         any(term in value for term in relative_terms)
         or any(re.search(pattern, value) for pattern in relative_patterns)
-        or not any(re.search(pattern, value) for pattern in absolute_patterns)
+        or not iso_date
+        or not re.search(time_pattern, value)
+        or not re.search(timezone_pattern, value)
+        or any(term in evidence for term in negative_semantics)
+        or not any(re.search(pattern, evidence) for pattern in deadline_semantics)
     ):
+        return None
+    try:
+        datetime(int(iso_date.group(1)), int(iso_date.group(2)), int(iso_date.group(3)))
+    except ValueError:
         return None
     return fact
 
@@ -140,7 +165,7 @@ def _audit_plan(plan: dict[str, Any], source: str) -> dict[str, Any]:
     )
     audited: dict[str, Any] = {
         "objective": _supported_fact(plan.get("objective"), source),
-        "owner": _supported_fact(plan.get("owner"), action_source),
+        "owner": _supported_owner(plan.get("owner"), action_source),
         "deadline": _specific_deadline(_supported_fact(plan.get("deadline"), action_source)),
         "deliverables": _supported_list(plan.get("deliverables"), source),
         "acceptance_criteria": _supported_list(plan.get("acceptance_criteria"), source),
@@ -153,10 +178,12 @@ def _audit_plan(plan: dict[str, Any], source: str) -> dict[str, Any]:
         if not isinstance(item, dict) or not str(item.get("value") or "").strip():
             continue
         kind = "stated" if item.get("kind") == "stated" else "inferred"
-        evidence = str(item.get("evidence") or "").strip()
-        if kind == "stated" and _normalize(evidence) not in _normalize(source):
-            kind, evidence = "inferred", ""
-        risks.append({"value": str(item["value"]).strip(), "kind": kind, "evidence": evidence})
+        if kind == "stated" and (supported := _supported_fact(item, source)):
+            risks.append({**supported, "kind": "stated"})
+        else:
+            risks.append(
+                {"value": str(item["value"]).strip(), "kind": "inferred", "evidence": ""}
+            )
     audited["risks"] = risks[:6]
 
     confirmed_owner = audited["owner"]["value"] if audited["owner"] else None
@@ -284,7 +311,8 @@ def _render(title: str, plan: dict[str, Any]) -> str:
     if risks:
         for risk in risks:
             label = "confirmed" if risk["kind"] == "stated" else "inferred - verify"
-            lines.append(f"- **{label}:** {risk['value']}")
+            evidence = f" - evidence: \"{_cell(risk['evidence'])}\"" if risk["kind"] == "stated" else ""
+            lines.append(f"- **{label}:** {risk['value']}{evidence}")
     else:
         lines.append("- No risks were identified from the supplied context.")
 
@@ -366,7 +394,8 @@ def _render_html(title: str, plan: dict[str, Any]) -> str:
     risks = plan.get("risks") or []
     risk_items = "".join(
         f"<li><strong>{'Confirmed' if risk['kind'] == 'stated' else 'Inferred - verify'}:</strong> "
-        f"{escape(risk['value'], quote=True)}</li>"
+        f"{escape(risk['value'], quote=True)}"
+        f"{' — evidence: &quot;' + escape(risk['evidence'], quote=True) + '&quot;' if risk['kind'] == 'stated' else ''}</li>"
         for risk in risks
     ) or "<li>No risks were identified from the supplied context.</li>"
 

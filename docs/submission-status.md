@@ -5,7 +5,7 @@ Last verified: 2026-07-17 15:55 KST
 ## Live Snapshot
 
 - Kaggle deadline: 2026-07-20 11:00 KST
-- Kaggle entrants: 4 teams; current account entry state: not joined
+- Kaggle entrants: 4 teams; current account entry state: joined (`userHasEntered=True`)
 - Deployed endpoint: <https://sitrep-agent.onrender.com>
 - Endpoint health: `200 {"ok":true,"version":"64d764c"}`
 - Marketplace listing: <https://app.joinsitrep.com/dashboard/marketplace/actiongate--450b1ac1-84b5-415b-9101-5660fc31c79b>
@@ -37,6 +37,6 @@ Last verified: 2026-07-17 15:55 KST
 
 ## Pending
 
-- Join the Kaggle hackathon, attach the Marketplace and repository URLs, and submit the final writeup.
+- Attach the Marketplace and repository URLs, add the prepared media, and submit the final writeup.
 
 Do not record credentials, OTPs, signing secrets, or API keys in this file.

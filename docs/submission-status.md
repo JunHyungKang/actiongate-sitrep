@@ -11,6 +11,7 @@ Last verified: 2026-07-17 KST
 - Marketplace listing: <https://app.joinsitrep.com/dashboard/marketplace/actiongate--450b1ac1-84b5-415b-9101-5660fc31c79b>
 - Marketplace state: published, 1 install, 0 runs
 - Deployed commit: `076d209`
+- Repository `main` contains newer changes; Render redeploy required before final submission
 
 ## Complete
 
@@ -27,8 +28,10 @@ Last verified: 2026-07-17 KST
 - Explicit Studio PROCEED case: `100/100`, `GREEN - READY`, `PROCEED`, `6/6`
 - Public LLM usage guard: explicit complete contracts skip the LLM; remaining calls are bounded to 12,000 input characters and 50 calls per UTC day per service process
 - Local preflight: passing
-- Tests: 44 passing, including a real HMAC request, semantic evidence checks,
+- Tests: 46 passing, including a real HMAC request, semantic evidence checks,
   malformed-payload handling, and adversarial evaluation checks
+- Scenario artifact evaluation: 6/6 decisions correct, 0 false PROCEED,
+  0 unsupported confirmed facts, 9/9 missing-field questions, 6/6 safe artifact pairs
 
 ## Pending
 

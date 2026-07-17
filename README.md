@@ -62,6 +62,7 @@ uv run ruff check .
 uv run uvicorn app:app --port 9000
 bash scripts/smoke-test.sh
 uv run python scripts/evaluate_actiongate.py
+uv run python scripts/evaluate_scenarios.py
 uv run python scripts/preflight_submission.py
 ```
 
@@ -81,7 +82,8 @@ OpenRouter-compatible values already declared in `render.yaml`. Confirm
 Test button, so the deployed revision can be verified directly.
 
 See [the demo scenario](docs/demo.md), the
-[adversarial evaluation](docs/evaluation-results.md), and the
+[policy evaluation](docs/evaluation-results.md), the
+[scenario artifact evaluation](docs/scenario-evaluation-results.md), and the
 [Kaggle writeup draft](docs/submission-draft.md).
 
 ## Repository History

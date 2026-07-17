@@ -1,0 +1,116 @@
+[
+  {
+    "id": "attendee-is-not-owner",
+    "expected_decision": "HOLD",
+    "expected_confirmed_risks": 0,
+    "source": "Task title: Ship launch plan\nTask description: Maya attended the meeting. Deadline: 2026-07-20 17:00 KST.\nMeeting summary: Deliverable: launch plan. Done when approved by Acme. Dependency: legal review.\nMeeting attendees: Maya, Jordan",
+    "plan": {
+      "objective": {"value": "Ship launch plan", "evidence": "Ship launch plan"},
+      "owner": {"value": "Maya", "evidence": "Maya attended the meeting"},
+      "deadline": {"value": "2026-07-20 17:00 KST", "evidence": "Deadline: 2026-07-20 17:00 KST"},
+      "deliverables": [{"value": "launch plan", "evidence": "Deliverable: launch plan"}],
+      "acceptance_criteria": [{"value": "approved by Acme", "evidence": "Done when approved by Acme"}],
+      "dependencies": [{"value": "legal review", "evidence": "Dependency: legal review"}]
+    }
+  },
+  {
+    "id": "speaker-is-not-reported-owner",
+    "expected_decision": "HOLD",
+    "expected_confirmed_risks": 0,
+    "source": "Task title: Ship launch plan\nTask description: Maya said Jordan owns the launch plan. Deadline: 2026-07-20 17:00 KST.\nMeeting summary: Deliverable: launch plan. Done when approved by Acme. Dependency: legal review.\nMeeting attendees: Maya, Jordan",
+    "plan": {
+      "objective": {"value": "Ship launch plan", "evidence": "Ship launch plan"},
+      "owner": {"value": "Maya", "evidence": "Maya said Jordan owns the launch plan"},
+      "deadline": {"value": "2026-07-20 17:00 KST", "evidence": "Deadline: 2026-07-20 17:00 KST"},
+      "deliverables": [{"value": "launch plan", "evidence": "Deliverable: launch plan"}],
+      "acceptance_criteria": [{"value": "approved by Acme", "evidence": "Done when approved by Acme"}],
+      "dependencies": [{"value": "legal review", "evidence": "Dependency: legal review"}]
+    }
+  },
+  {
+    "id": "date-only-is-not-deadline",
+    "expected_decision": "HOLD",
+    "expected_confirmed_risks": 0,
+    "source": "Task title: Ship launch plan\nTask description: Owner: Maya. Deadline: 2026-07-20.\nMeeting summary: Deliverable: launch plan. Done when approved by Acme. Dependency: legal review.\nMeeting attendees: Maya",
+    "plan": {
+      "objective": {"value": "Ship launch plan", "evidence": "Ship launch plan"},
+      "owner": {"value": "Maya", "evidence": "Owner: Maya"},
+      "deadline": {"value": "2026-07-20", "evidence": "Deadline: 2026-07-20"},
+      "deliverables": [{"value": "launch plan", "evidence": "Deliverable: launch plan"}],
+      "acceptance_criteria": [{"value": "approved by Acme", "evidence": "Done when approved by Acme"}],
+      "dependencies": [{"value": "legal review", "evidence": "Dependency: legal review"}]
+    }
+  },
+  {
+    "id": "invalid-calendar-date",
+    "expected_decision": "HOLD",
+    "expected_confirmed_risks": 0,
+    "source": "Task title: Ship launch plan\nTask description: Owner: Maya. Deadline: 2026-02-30 17:00 KST.\nMeeting summary: Deliverable: launch plan. Done when approved by Acme. Dependency: legal review.\nMeeting attendees: Maya",
+    "plan": {
+      "objective": {"value": "Ship launch plan", "evidence": "Ship launch plan"},
+      "owner": {"value": "Maya", "evidence": "Owner: Maya"},
+      "deadline": {"value": "2026-02-30 17:00 KST", "evidence": "Deadline: 2026-02-30 17:00 KST"},
+      "deliverables": [{"value": "launch plan", "evidence": "Deliverable: launch plan"}],
+      "acceptance_criteria": [{"value": "approved by Acme", "evidence": "Done when approved by Acme"}],
+      "dependencies": [{"value": "legal review", "evidence": "Dependency: legal review"}]
+    }
+  },
+  {
+    "id": "non-deadline-date-context",
+    "expected_decision": "HOLD",
+    "expected_confirmed_risks": 0,
+    "source": "Task title: Ship launch plan\nTask description: Owner: Maya. Do not start before 2026-07-20 17:00 KST.\nMeeting summary: Deliverable: launch plan. Done when approved by Acme. Dependency: legal review.\nMeeting attendees: Maya",
+    "plan": {
+      "objective": {"value": "Ship launch plan", "evidence": "Ship launch plan"},
+      "owner": {"value": "Maya", "evidence": "Owner: Maya"},
+      "deadline": {"value": "2026-07-20 17:00 KST", "evidence": "Do not start before 2026-07-20 17:00 KST"},
+      "deliverables": [{"value": "launch plan", "evidence": "Deliverable: launch plan"}],
+      "acceptance_criteria": [{"value": "approved by Acme", "evidence": "Done when approved by Acme"}],
+      "dependencies": [{"value": "legal review", "evidence": "Dependency: legal review"}]
+    }
+  },
+  {
+    "id": "fully-supported-contract",
+    "expected_decision": "PROCEED",
+    "expected_confirmed_risks": 1,
+    "source": "Task title: Ship launch plan\nTask description: Owner: Maya. Deadline: 2026-07-20 17:00 KST.\nMeeting summary: Deliverable: launch plan. Done when approved by Acme. Dependency: legal review. Legal review may delay launch.\nMeeting attendees: Maya",
+    "plan": {
+      "objective": {"value": "Ship launch plan", "evidence": "Ship launch plan"},
+      "owner": {"value": "Maya", "evidence": "Owner: Maya"},
+      "deadline": {"value": "2026-07-20 17:00 KST", "evidence": "Deadline: 2026-07-20 17:00 KST"},
+      "deliverables": [{"value": "launch plan", "evidence": "Deliverable: launch plan"}],
+      "acceptance_criteria": [{"value": "approved by Acme", "evidence": "Done when approved by Acme"}],
+      "dependencies": [{"value": "legal review", "evidence": "Dependency: legal review"}],
+      "risks": [{"value": "Legal review may delay launch", "evidence": "Legal review may delay launch", "kind": "stated"}]
+    }
+  },
+  {
+    "id": "missing-definition-of-done",
+    "expected_decision": "HOLD",
+    "expected_confirmed_risks": 0,
+    "source": "Task title: Ship launch plan\nTask description: Owner: Maya. Deadline: 2026-07-20 17:00 KST.\nMeeting summary: Deliverable: launch plan. Dependency: legal review.\nMeeting attendees: Maya",
+    "plan": {
+      "objective": {"value": "Ship launch plan", "evidence": "Ship launch plan"},
+      "owner": {"value": "Maya", "evidence": "Owner: Maya"},
+      "deadline": {"value": "2026-07-20 17:00 KST", "evidence": "Deadline: 2026-07-20 17:00 KST"},
+      "deliverables": [{"value": "launch plan", "evidence": "Deliverable: launch plan"}],
+      "acceptance_criteria": [],
+      "dependencies": [{"value": "legal review", "evidence": "Dependency: legal review"}]
+    }
+  },
+  {
+    "id": "unrelated-risk-evidence",
+    "expected_decision": "PROCEED",
+    "expected_confirmed_risks": 0,
+    "source": "Task title: Ship launch plan\nTask description: Owner: Maya. Deadline: 2026-07-20 17:00 KST.\nMeeting summary: Deliverable: launch plan. Done when approved by Acme. Dependency: legal review. Legal needs two business days.\nMeeting attendees: Maya",
+    "plan": {
+      "objective": {"value": "Ship launch plan", "evidence": "Ship launch plan"},
+      "owner": {"value": "Maya", "evidence": "Owner: Maya"},
+      "deadline": {"value": "2026-07-20 17:00 KST", "evidence": "Deadline: 2026-07-20 17:00 KST"},
+      "deliverables": [{"value": "launch plan", "evidence": "Deliverable: launch plan"}],
+      "acceptance_criteria": [{"value": "approved by Acme", "evidence": "Done when approved by Acme"}],
+      "dependencies": [{"value": "legal review", "evidence": "Dependency: legal review"}],
+      "risks": [{"value": "Customer approved production rollout", "evidence": "Legal needs two business days", "kind": "stated"}]
+    }
+  }
+]

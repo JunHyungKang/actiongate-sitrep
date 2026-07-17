@@ -44,6 +44,8 @@ the confirmed contract and GREEN status for source-supported commitments.
 ## Accomplishments
 
 - deterministic evidence and ownership gates;
+- an eight-case adversarial policy suite that reduced false-PROCEED decisions
+  from five to zero versus a presence-only baseline;
 - explicit handling of vague deadlines;
 - graceful fallback when structured model output fails;
 - regression tests for the main unsafe-execution cases;

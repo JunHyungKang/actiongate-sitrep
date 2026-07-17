@@ -21,7 +21,7 @@ Last verified: 2026-07-17 KST
 - Marketplace listing: published
 - Render deployment: free plan, healthy
 - Local preflight: passing
-- Tests: 34 passing, including a real HMAC request through the FastAPI endpoint
+- Tests: 36 passing, including a real HMAC request and adversarial evaluation checks
 
 ## Pending
 

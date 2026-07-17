@@ -56,6 +56,7 @@ uv run pytest
 uv run ruff check .
 uv run uvicorn app:app --port 9000
 bash scripts/smoke-test.sh
+uv run python scripts/evaluate_actiongate.py
 uv run python scripts/preflight_submission.py
 ```
 
@@ -73,8 +74,9 @@ For the hosted deployment, set `SITREP_AGENT_SECRET`, `LLM_API_KEY`, and the
 OpenRouter-compatible values already declared in `render.yaml`. Confirm
 `/health` returns `{"ok":true}` before using the Studio Test button.
 
-See [the demo scenario](docs/demo.md) and
-[the Kaggle writeup draft](docs/submission-draft.md).
+See [the demo scenario](docs/demo.md), the
+[adversarial evaluation](docs/evaluation-results.md), and the
+[Kaggle writeup draft](docs/submission-draft.md).
 
 ## Repository History
 
